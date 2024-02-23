@@ -16,7 +16,7 @@ def create_glfw_window(exit_stack, version_major: int, version_minor: int):
 
     # Create the window.
 
-    window = glfw.create_window(640, 480, "DrawScene", None, None)
+    window = glfw.create_window(1920, 1200, "DrawScene", glfw.get_primary_monitor(), None)
     if not window:
         raise RuntimeError("Unable to create window using GLFW.")
     exit_stack.callback(glfw.destroy_window, window)

@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-# import ctypes
 import contextlib
 
 import glfw
@@ -87,6 +86,7 @@ class RenderableFloor(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
+    # noinspection PyUnusedLocal
     def render(self, t_now: float, m_xform):
 
         glUseProgram(self._shader_program)
@@ -192,7 +192,7 @@ def normalize(v):
     return v / np.linalg.norm(v)
 
 
-def make_unitsphere_triangles_recursive(triangle, recursion_level: int):
+def make_unit_sphere_triangles_recursive(triangle, recursion_level: int):
     if recursion_level == 0:
         return [triangle]
 
@@ -204,20 +204,20 @@ def make_unitsphere_triangles_recursive(triangle, recursion_level: int):
 
     triangles = []
 
-    triangles.extend(make_unitsphere_triangles_recursive((v1 , v12, v13), recursion_level - 1))
-    triangles.extend(make_unitsphere_triangles_recursive((v12, v2 , v23), recursion_level - 1))
-    triangles.extend(make_unitsphere_triangles_recursive((v12, v23, v13), recursion_level - 1))
-    triangles.extend(make_unitsphere_triangles_recursive((v13, v23, v3 ), recursion_level - 1))
+    triangles.extend(make_unit_sphere_triangles_recursive((v1, v12, v13), recursion_level - 1))
+    triangles.extend(make_unit_sphere_triangles_recursive((v12, v2, v23), recursion_level - 1))
+    triangles.extend(make_unit_sphere_triangles_recursive((v12, v23, v13), recursion_level - 1))
+    triangles.extend(make_unit_sphere_triangles_recursive((v13, v23, v3), recursion_level - 1))
 
     return triangles
 
 
-def make_unitsphere_triangles(recursion_level: int):
+def make_unit_sphere_triangles(recursion_level: int):
 
-    v1 = np.array((np.sqrt(8/9), 0, -1/3), dtype=np.float64)
-    v2 = np.array((-np.sqrt(2/9), np.sqrt(2/3), -1/3), dtype=np.float64)
-    v3 = np.array((-np.sqrt(2/9), -np.sqrt(2/3), -1/3), dtype=np.float64)
-    v4 = np.array((0, 0, 1), dtype=np.float64)
+    v1 = normalize(np.array((-1.0, -1.0, -1.0)))
+    v2 = normalize(np.array((+1.0, +1.0, -1.0)))
+    v3 = normalize(np.array((+1.0, -1.0, +1.0)))
+    v4 = normalize(np.array((-1.0, +1.0, +1.0)))
 
     t1 = (v1, v3, v2)
     t2 = (v1, v2, v4)
@@ -226,20 +226,21 @@ def make_unitsphere_triangles(recursion_level: int):
 
     triangles = []
 
-    triangles.extend(make_unitsphere_triangles_recursive(t1, recursion_level))
-    triangles.extend(make_unitsphere_triangles_recursive(t2, recursion_level))
-    triangles.extend(make_unitsphere_triangles_recursive(t3, recursion_level))
-    triangles.extend(make_unitsphere_triangles_recursive(t4, recursion_level))
+    triangles.extend(make_unit_sphere_triangles_recursive(t1, recursion_level))
+    triangles.extend(make_unit_sphere_triangles_recursive(t2, recursion_level))
+    triangles.extend(make_unit_sphere_triangles_recursive(t3, recursion_level))
+    triangles.extend(make_unit_sphere_triangles_recursive(t4, recursion_level))
 
     return triangles
 
 
 class RenderableSphere(Renderable):
 
-    def __init__(self, x: float, y: float, z: float, scale: float):
+    def __init__(self, x: float, y: float, z: float, scale: float, revolution_frequency: float):
 
         self._location = (x, y, z)
         self._scale = scale
+        self._revolution_frequency = revolution_frequency
 
         self._shaders = None
         self._shader_program = None
@@ -259,31 +260,37 @@ class RenderableSphere(Renderable):
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
         with Image.open("earth.png") as im:
             image = np.array(im)
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[0], image.shape[1], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
-        glGenerateMipmap(GL_TEXTURE_2D)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[1], image.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
+        #glGenerateMipmap(GL_TEXTURE_2D)
 
-        triangles = make_unitsphere_triangles(recursion_level=5)
+        triangles = make_unit_sphere_triangles(recursion_level=6)
 
-        vertex_data = np.array(triangles, dtype=np.float32).reshape(-1, 3)
+        triangle_vertices = np.array(triangles, dtype=np.float32).reshape(-1, 3)
+
+        print("triangle_vertices shape:", triangle_vertices.shape)
 
         vbo_dtype = np.dtype([
             ("vertex", np.float32, 3),
             ("texture_coordinate", np.float32, 2)
         ])
 
-        vbo_data = np.empty(dtype=vbo_dtype, shape=(len(vertex_data)))
+        vbo_data = np.empty(dtype=vbo_dtype, shape=(len(triangle_vertices)))
 
-        vbo_data["vertex"] = vertex_data * (0.5 * self._scale)
-        vbo_data["texture_coordinate"][:,0] = 0.5 * (np.arctan2(vertex_data[:, 1], vertex_data[:, 2]) / np.pi + 1.0)
-        vbo_data["texture_coordinate"][:,1] = 0.5 * (vertex_data[:, 0] + 1.0)
+        vbo_data["vertex"] = triangle_vertices * (0.5 * self._scale)
+        vbo_data["texture_coordinate"][:, 0] = 0.5 + 0.5 * np.arctan2(triangle_vertices[:, 0], triangle_vertices[:, 2]) / np.pi
+        vbo_data["texture_coordinate"][:, 1] = 0.5 - 0.5 * triangle_vertices[:, 1]
 
-        self._num_points = vertex_data.size
+        # Prevent texture coordinate wrap-around.
+        vbo_data["texture_coordinate"][1::3, 0] = vbo_data["texture_coordinate"][0::3, 0] + (vbo_data["texture_coordinate"][1::3, 0] - vbo_data["texture_coordinate"][0::3, 0] + 0.5) % 1.0 - 0.5
+        vbo_data["texture_coordinate"][2::3, 0] = vbo_data["texture_coordinate"][0::3, 0] + (vbo_data["texture_coordinate"][2::3, 0] - vbo_data["texture_coordinate"][0::3, 0] + 0.5) % 1.0 - 0.5
+
+        self._num_points = len(vbo_data)
 
         # Make Vertex Buffer Object (VBO)
         self._vbo = glGenBuffers(1)
@@ -299,11 +306,11 @@ class RenderableSphere(Renderable):
 
         # Defines the attribute with index 0 in the current VAO.
 
-        attribute_index = 0 # 3D vertex coordinates
+        attribute_index = 0  # 3D vertex coordinates
         glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(0))
         glEnableVertexAttribArray(attribute_index)
 
-        attribute_index = 1 # 2D texture coordinates
+        attribute_index = 1  # 2D texture coordinates
         glVertexAttribPointer(attribute_index, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(12))
         glEnableVertexAttribArray(attribute_index)
 
@@ -330,11 +337,12 @@ class RenderableSphere(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
+    # noinspection PyUnusedLocal
     def render(self, t_now: float, m_xform):
 
         glUseProgram(self._shader_program)
 
-        m_model = translate(*self._location)
+        m_model = translate(*self._location) @ rotate(0, 1, 0, t_now * self._revolution_frequency)
 
         mvp = m_xform @ m_model
         glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, mvp.astype(np.float32))
@@ -387,15 +395,17 @@ class Application:
             window = create_glfw_window(exit_stack, 4, 1)
 
             glfw.set_framebuffer_size_callback(window, lambda *args: self.framebuffer_size_callback(*args))
+            glfw.set_key_callback(window, lambda *args: self.key_callback(*args))
 
             glfw.make_context_current(window)
 
-            glfw.swap_interval(0)
+            glfw.swap_interval(1)
 
             # Create the scene model.
             scene = RenderableScene()
-            scene.add_model(RenderableSphere(+2.0, 1.40, 0.0, 2.80))
-            scene.add_model(RenderableCube(-2.0, 0.15, 0.0, 0.30, 0.0))
+            for i in range(3):
+                scene.add_model(RenderableSphere(3 * np.cos(i/3*2*np.pi), 0.5, 3 * np.sin(i/3*2*np.pi), 1.00, 1.5 + 2.5 * i))
+            #scene.add_model(RenderableCube(-2.0, 0.15, 0.0, 0.30, 0.0))
             scene.add_model(RenderableFloor(8.0))
             scene.open()
             with contextlib.closing(scene):
@@ -406,7 +416,7 @@ class Application:
                 t_prev = None
 
                 glPointSize(0.1)
-                glClearColor(1.0, 1.0, 1.0, 1.0)
+                glClearColor(0.12, 0.12, 0.12, 1.0)
                 glEnable(GL_DEPTH_TEST)
 
                 while not glfw.window_should_close(window):
@@ -438,9 +448,17 @@ class Application:
                     glfw.poll_events()
                     frame_counter += 1
 
-    def framebuffer_size_callback(self, window, width, height):
+    # noinspection PyMethodMayBeStatic
+    def framebuffer_size_callback(self, _window, width, height):
         print("Resizing framebuffer:", width, height)
         glViewport(0, 0, width, height)
+
+    def key_callback(self, window, key: int, scancode: int, action: int, mods: int):
+
+        if action == glfw.PRESS:
+            match key:
+                case glfw.KEY_ESCAPE:
+                    glfw.set_window_should_close(window, True)
 
 
 def main():
