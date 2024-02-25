@@ -56,7 +56,7 @@ class Application:
                         RenderableTransformer(
                             earth,
                             (lambda kx, ky, kz:
-                             lambda: translate(0.3*kx, 4 + 0.3*ky, 0.3*kz) @ scale(5.0 + 5.0 * math.sin(world.time())) @ rotate(0, 1, 0, world.time())
+                             lambda: translate(0.3*kx, 4 + 0.3*ky, 0.3*kz) @ scale(2.5 + 1.5 * math.sin(0.1 * world.time())) @ rotate(0, 1, 0, world.time())
                              )(kx_, ky_, kz_)
                 )
             )
@@ -96,7 +96,7 @@ class Application:
 
             view_scene = RenderableTransformer(
                 scene,
-                lambda: translate(0.0, -4.5, -25.0) @ rotate(0, 1, 0, world.time() * -0.5)
+                lambda: translate(0.0, -4.5, -25.0) @ rotate(0, 1, 0, world.time() * -0.01)
             )
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

@@ -82,8 +82,8 @@ class RenderableSphere(Renderable):
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[1], image.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
 
-        triangles = make_unit_sphere_triangles(recursion_level=6)
-        #triangles = make_sphere_triangles()
+        #triangles = make_unit_sphere_triangles(recursion_level=6)
+        triangles = make_sphere_triangles()
 
         print("triangles:", len(triangles))
 
