@@ -1,27 +1,8 @@
-"""GLFW and OpenGL utilities."""
+"""OpenGL utilities."""
 
-import glfw
+import os
+
 from OpenGL.GL import *
-
-
-def create_glfw_window(exit_stack, version_major: int, version_minor: int):
-    """Create a window using GLFW."""
-
-    # Set up window creation hints.
-
-    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, version_major)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, version_minor)
-    glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-    glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL_TRUE)
-
-    # Create the window.
-
-    window = glfw.create_window(1920, 1200, "DrawScene", glfw.get_primary_monitor(), None)
-    if not window:
-        raise RuntimeError("Unable to create window using GLFW.")
-    exit_stack.callback(glfw.destroy_window, window)
-
-    return window
 
 
 def make_shader(filename: str, shader_type):
@@ -30,7 +11,7 @@ def make_shader(filename: str, shader_type):
         with open(filename, "rb") as fi:
             shader_source = fi.read()
     except FileNotFoundError:
-        print("Shader source not found: {!r}".format(filename))
+        print("Shader source not found: {!r} from {!r}".format(filename, os.getcwd()))
         return None
 
     shader = None

@@ -68,7 +68,7 @@ void main()
     }
     else
     {
-        m = (m - frame_counter) % max_iterations;
+        //m = (m - frame_counter) % max_iterations;
 
         uint r = (m % 256);
         uint g = (m %  16) * 16;
