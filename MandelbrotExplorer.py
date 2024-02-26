@@ -195,10 +195,10 @@ class MandelbrotRenderer:
                     self.map_center = (self.map_center[0] + dx, self.map_center[1] + dy)
                     glUniform2d(self.map_center_shader_location, self.map_center[0], self.map_center[1])
                 case glfw.KEY_X:
-                    self.map_scale *= 0.5
+                    self.map_scale *= 0.75
                     glUniform1d(self.map_scale_shader_location, self.map_scale)
                 case glfw.KEY_Z:
-                    self.map_scale *= 2.0
+                    self.map_scale *= 1.5
                     glUniform1d(self.map_scale_shader_location, self.map_scale)
                 case glfw.KEY_C:
                     self.max_iterations = max(1, self.max_iterations // 2)
