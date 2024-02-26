@@ -9,53 +9,7 @@ from OpenGL.GL import *
 
 from renderables.renderable import Renderable
 from renderables.sphere.sphere_triangles import make_sphere_triangles
-from renderables.utilities import create_opengl_program
-
-
-def normalize(v):
-    return v / np.linalg.norm(v)
-
-
-def make_unit_sphere_triangles_recursive(triangle, recursion_level: int):
-    if recursion_level == 0:
-        return [triangle]
-
-    (v1, v2, v3) = triangle
-
-    v12 = normalize(v1 + v2)
-    v13 = normalize(v1 + v3)
-    v23 = normalize(v2 + v3)
-
-    triangles = []
-
-    triangles.extend(make_unit_sphere_triangles_recursive((v1, v12, v13), recursion_level - 1))
-    triangles.extend(make_unit_sphere_triangles_recursive((v12, v2, v23), recursion_level - 1))
-    triangles.extend(make_unit_sphere_triangles_recursive((v12, v23, v13), recursion_level - 1))
-    triangles.extend(make_unit_sphere_triangles_recursive((v13, v23, v3), recursion_level - 1))
-
-    return triangles
-
-
-def make_unit_sphere_triangles(recursion_level: int):
-
-    v1 = normalize(np.array((-1.0, -1.0, -1.0)))
-    v2 = normalize(np.array((+1.0, +1.0, -1.0)))
-    v3 = normalize(np.array((+1.0, -1.0, +1.0)))
-    v4 = normalize(np.array((-1.0, +1.0, +1.0)))
-
-    t1 = (v1, v2, v3)
-    t2 = (v1, v4, v2)
-    t3 = (v1, v3, v4)
-    t4 = (v2, v4, v3)
-
-    triangles = []
-
-    triangles.extend(make_unit_sphere_triangles_recursive(t1, recursion_level))
-    triangles.extend(make_unit_sphere_triangles_recursive(t2, recursion_level))
-    triangles.extend(make_unit_sphere_triangles_recursive(t3, recursion_level))
-    triangles.extend(make_unit_sphere_triangles_recursive(t4, recursion_level))
-
-    return triangles
+from renderables.utilities import create_opengl_program, make_unit_sphere_triangles_v2
 
 
 class RenderableSphere(Renderable):
@@ -82,8 +36,7 @@ class RenderableSphere(Renderable):
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[1], image.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
 
-        triangles = make_unit_sphere_triangles(recursion_level=6)
-        #triangles = make_sphere_triangles()
+        triangles = make_unit_sphere_triangles_v2(recursion_level=4)
 
         print("triangles:", len(triangles))
 
@@ -136,7 +89,8 @@ class RenderableSphere(Renderable):
         # Unbind VBO.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-    def __del__(self):
+    def close(self):
+
         if self._vao is not None:
             glDeleteVertexArrays(1, (self._vao, ))
             self._vao = None
@@ -147,6 +101,7 @@ class RenderableSphere(Renderable):
 
         if self._shader_program is not None:
             glDeleteProgram(self._shader_program)
+            self._shader_program = None
 
         if self._shaders is not None:
             for shader in self._shaders:

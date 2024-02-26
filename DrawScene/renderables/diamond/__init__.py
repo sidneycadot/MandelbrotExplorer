@@ -7,37 +7,44 @@ import numpy as np
 from OpenGL.GL import *
 
 from renderables.renderable import Renderable
-from renderables.utilities import create_opengl_program
+from renderables.utilities import create_opengl_program, make_unit_sphere_triangles_v2
 
 
-class RenderableCube(Renderable):
+class RenderableDiamond(Renderable):
 
     def __init__(self):
 
-        self._num_points = 8
-
-        shader_source_path = os.path.join(os.path.dirname(__file__), "cube")
+        shader_source_path = os.path.join(os.path.dirname(__file__), "diamond")
 
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
         self._mvp_location = glGetUniformLocation(self._shader_program, "mvp")
 
-        vertex_data = np.array([
-            (-0.5, -0.5, -0.5),
-            (-0.5, -0.5, +0.5),
-            (-0.5, +0.5, -0.5),
-            (-0.5, +0.5, +0.5),
-            (+0.5, -0.5, -0.5),
-            (+0.5, -0.5, +0.5),
-            (+0.5, +0.5, -0.5),
-            (+0.5, +0.5, +0.5)
-        ], dtype=np.float32)
+        triangles = make_unit_sphere_triangles_v2(recursion_level=1)
+
+        print("triangles:", len(triangles))
+
+        triangle_vertices = np.array(triangles, dtype=np.float32).reshape(-1, 3)
+
+        self._num_points = len(triangle_vertices)
+
+        print("triangle_vertices shape:", triangle_vertices.shape)
+
+        vbo_dtype = np.dtype([
+            ("a_vertex" , np.float32, 3),
+            ("a_color"  , np.float32, 3)
+        ])
+
+        vbo_data = np.empty(dtype=vbo_dtype, shape=self._num_points)
+
+        vbo_data["a_vertex"] = triangle_vertices
+        vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(self._num_points // 3, 3)), 3, axis=0)
 
         # Make Vertex Buffer Object (VBO)
         self._vbo = glGenBuffers(1)
 
         glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
-        glBufferData(GL_ARRAY_BUFFER, vertex_data.nbytes, vertex_data, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, vbo_data.nbytes, vbo_data, GL_STATIC_DRAW)
 
         # Create a vertex array object (VAO)
         # If a GL_ARRAY_BUFFER is bound, it will be associated with the VAO.
@@ -47,10 +54,12 @@ class RenderableCube(Renderable):
 
         # Defines the attribute with index 0 in the current VAO.
 
-        attribute_index = 0
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 0, None)
+        attribute_index = 0  # 3D vertex coordinates
+        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(attribute_index)
 
-        # Enable attribute with location 0.
+        attribute_index = 1  # 3D colors
+        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
         glEnableVertexAttribArray(attribute_index)
 
         # Unbind VAO
@@ -84,5 +93,7 @@ class RenderableCube(Renderable):
 
         glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, m_xform.astype(np.float32))
 
+        glEnable(GL_CULL_FACE)
         glBindVertexArray(self._vao)
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, self._num_points)
+        glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, 1000000)
+        glDisable(GL_CULL_FACE)

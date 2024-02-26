@@ -52,7 +52,8 @@ class RenderableFloor(Renderable):
         # Unbind VBO.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-    def __del__(self):
+    def close(self):
+
         if self._vao is not None:
             glDeleteVertexArrays(1, (self._vao,))
             self._vao = None
@@ -63,13 +64,13 @@ class RenderableFloor(Renderable):
 
         if self._shader_program is not None:
             glDeleteProgram(self._shader_program)
+            self._shader_program = None
 
         if self._shaders is not None:
             for shader in self._shaders:
                 glDeleteShader(shader)
             self._shaders = None
 
-    # noinspection PyUnusedLocal
     def render(self, m_xform):
 
         glUseProgram(self._shader_program)

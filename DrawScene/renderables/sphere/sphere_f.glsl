@@ -13,6 +13,7 @@ void main()
 
     if (false && !gl_FrontFacing)
     {
-        fragment_color = vec4(1.0, 1.0 - fragment_color.y, 1.0 - fragment_color.z, 1.0);
+        float monochrome = (0.2125 * fragment_color.r) + (0.7154 * fragment_color.g) + (0.0721 * fragment_color.b);
+        fragment_color = vec4(monochrome, monochrome, monochrome, 1.0);
     }
 }
