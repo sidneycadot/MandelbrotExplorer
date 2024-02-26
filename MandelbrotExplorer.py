@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 """OpenGL Mandelbrot viewer."""
 
 import math
@@ -35,7 +37,8 @@ def create_glfw_fullscreen_window(exit_stack, monitor, version_major: int, versi
 
     # Create the window.
 
-    window = glfw.create_window(best_mode.size.width, best_mode.size.height, "Mandelbrot Viewer", monitor, None)
+    #window = glfw.create_window(best_mode.size.width, best_mode.size.height, "Mandelbrot Viewer", monitor, None)
+    window = glfw.create_window(640, 480, "Mandelbrot Viewer", None, None)
     if not window:
         raise RuntimeError("Unable to create window using GLFW.")
     exit_stack.callback(glfw.destroy_window, window)
@@ -45,16 +48,18 @@ def create_glfw_fullscreen_window(exit_stack, monitor, version_major: int, versi
 
 def create_opengl_program(exit_stack):
 
-    # vertex_shader = glCreateShader(GL_VERTEX_SHADER)
-    # exit_stack.callback(glDeleteShader, vertex_shader)
+    vertex_shader = glCreateShader(GL_VERTEX_SHADER)
+    exit_stack.callback(glDeleteShader, vertex_shader)
 
-    # with open("vertex_shader.glsl", "rb") as fi:
-    #     shader_source = fi.read()
-    # glShaderSource(vertex_shader, shader_source)
-    # glCompileShader(vertex_shader)
-    # status = glGetShaderiv(vertex_shader, GL_COMPILE_STATUS)
-    # if status != GL_TRUE:
-    #     raise RuntimeError("Error while compiling the vertex shader.")
+    with open("vertex_shader.glsl", "rb") as fi:
+        shader_source = fi.read()
+    glShaderSource(vertex_shader, shader_source)
+    glCompileShader(vertex_shader)
+    status = glGetShaderiv(vertex_shader, GL_COMPILE_STATUS)
+    if status != GL_TRUE:
+        info = glGetShaderInfoLog(vertex_shader)
+        print(info.decode())
+        raise RuntimeError("Error while compiling the vertex shader.")
 
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER)
     exit_stack.callback(glDeleteShader, fragment_shader)
@@ -65,12 +70,14 @@ def create_opengl_program(exit_stack):
     glCompileShader(fragment_shader)
     status = glGetShaderiv(fragment_shader, GL_COMPILE_STATUS)
     if status != GL_TRUE:
+        info = glGetShaderInfoLog(fragment_shader)
+        print(info.decode())
         raise RuntimeError("Error while compiling the fragment shader.")
 
     program = glCreateProgram()
     exit_stack.callback(glDeleteProgram, program)
 
-    # glAttachShader(program, vertex_shader)
+    glAttachShader(program, vertex_shader)
     glAttachShader(program, fragment_shader)
 
     glLinkProgram(program)
@@ -249,7 +256,7 @@ class MandelbrotRenderer:
 
             # Create a GLFW fullscreen window.
 
-            window = create_glfw_fullscreen_window(exit_stack, glfw.get_primary_monitor(), 4, 2)
+            window = create_glfw_fullscreen_window(exit_stack, glfw.get_primary_monitor(), 4, 1)
 
             # Make the new fullscreen window the current OpenGL context.
 

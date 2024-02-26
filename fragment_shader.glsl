@@ -1,5 +1,5 @@
 
-#version 420 core
+#version 410 core
 
 layout(location = 0) out vec4 fragment_color;
 
@@ -22,14 +22,14 @@ uint mandelbrot(double x0, double y0, uint max_iterations)
     uint iteration = 0;
     while (iteration < max_iterations)
     {
-        const double xx = x * x;
-        const double yy = y * y;
+        double xx = x * x;
+        double yy = y * y;
 
         if (xx + yy > 4.0)
         {
             break;
         }
-        const double xtemp = xx - yy + x0;
+        double xtemp = xx - yy + x0;
         y = 2 * x * y + y0;
         x = xtemp;
         ++iteration;
@@ -39,8 +39,8 @@ uint mandelbrot(double x0, double y0, uint max_iterations)
 
 void main()
 {
-    const double sx = gl_FragCoord.x;
-    const double sy = gl_FragCoord.y;
+    double sx = gl_FragCoord.x;
+    double sy = gl_FragCoord.y;
 
     // "outside" = (0, 0) -- (640, 480)
 
@@ -50,15 +50,15 @@ void main()
     uint width  = window_size.x;
     uint height = window_size.y;
 
-    const double scale = map_scale / min(width, height);
+    double scale = map_scale / min(width, height);
 
-    const float angle = radians(float(map_angle));
+    float angle = radians(float(map_angle));
 
-    const double sin_angle = sin(angle);
-    const double cos_angle = cos(angle);
+    double sin_angle = sin(angle);
+    double cos_angle = cos(angle);
 
-    const double x = map_center.x + 0.5 * scale * (height * sin_angle + 2.0 * cos_angle * sx - 2.0 * sin_angle * sy - cos_angle * width);
-    const double y = map_center.y - 0.5 * scale * (cos_angle * (height - 2 * sy) + sin_angle * (-2 * sx + width));
+    double x = map_center.x + 0.5 * scale * (height * sin_angle + 2.0 * cos_angle * sx - 2.0 * sin_angle * sy - cos_angle * width);
+    double y = map_center.y - 0.5 * scale * (cos_angle * (height - 2 * sy) + sin_angle * (-2 * sx + width));
 
     uint m = mandelbrot(x, y, max_iterations);
 
