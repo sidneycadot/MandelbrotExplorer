@@ -7,7 +7,8 @@ from OpenGL.GL import *
 
 from matrices import translate, rotate, scale, projection
 
-from renderables import RenderableSphere, RenderableFloor, RenderableScene, RenderableTransformer, RenderableCube
+from renderables import RenderableSphere, RenderableFloor, RenderableScene, RenderableTransformer, RenderableCube, \
+    RenderableDiamond, RenderableCylinder
 
 from world import World
 
@@ -34,34 +35,67 @@ class Application:
         return window
 
     @staticmethod
-    def run_with_active_gl_context(window):
-        """Run with an active OpenGL context.
+    def run():
 
-        At the end of the routine, all objects will be garbage collected."""
+        """Main entry point."""
+
+        if not glfw.init():
+            raise RuntimeError("Unable to initialize GLFW.")
+
+        # Create a GLFW window and set it as the current OpenGL context.
+
+        window = Application.create_glfw_window(4, 1)
+
+        glfw.set_framebuffer_size_callback(window, lambda *args: Application.framebuffer_size_callback(*args))
+        glfw.set_key_callback(window, lambda *args: Application.key_callback(*args))
+
+        glfw.make_context_current(window)
 
         glfw.swap_interval(1)
-        glPointSize(2)
+        glPointSize(1)
         world = World()
 
         # Create the scene model.
         scene = RenderableScene()
+
         scene.add_model(RenderableFloor(8.0, 8.0))
 
-        earth = RenderableSphere()
+        render_earths = False
+        if render_earths:
 
-        for kx_ in range(0, 1):
-            for ky_ in range(0, 1):
-                for kz_ in range(0, 1):
-                    scene.add_model(
-                        RenderableTransformer(
-                            earth,
-                            (lambda kx, ky, kz:
-                             lambda: translate(0.3*kx, 4 + 0.3*ky, 0.3*kz) @ scale(2.5 + 1.5 * math.sin(0.1 * world.time())) @ rotate(0, 1, 0, world.time())
-                             )(kx_, ky_, kz_)
+            # add center earth with smaller earths around it.
+
+            earth = RenderableSphere()
+
+            scene.add_model(
+                RenderableTransformer(
+                    earth,
+                     lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(0, 1, 0, world.time())
                 )
             )
 
-        #scene.add_model(RenderableTransformer(RenderableCube(), lambda: translate(0.0, 0.5, 0.0)))
+            num_around = 0
+            for ei_ in range(num_around):
+                scene.add_model(
+                    RenderableTransformer(
+                        earth,
+                        (lambda ei:
+                         lambda: translate(6.5 * math.cos(ei / num_around * math.tau), 6.5 * math.sin(ei / num_around * math.tau), 0.0) @ scale(2.0) @ rotate(1, 0, 0, world.time())
+                         )(ei_)
+                    )
+                )
+
+        scene.add_model(
+            RenderableTransformer(
+                RenderableCylinder(),
+                lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(0, 1, 0, 0.001 * world.time())
+            )
+        )
+
+        view_scene = RenderableTransformer(
+            scene,
+            lambda: translate(0.0, -2.5, -25.0) @ rotate(0, 1, 0, world.time() * 0)
+        )
 
         # Prepare loop.
 
@@ -70,8 +104,9 @@ class Application:
 
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
+
         #glEnable(GL_CULL_FACE)
-        #glCullFace(GL_FRONT)
+        #glCullFace(GL_BACK)
 
         fov_degrees = 30.0
         near_plane = 0.5
@@ -92,13 +127,6 @@ class Application:
             (framebuffer_width, framebuffer_height) = glfw.get_framebuffer_size(window)
             m_projection = projection(framebuffer_width, framebuffer_height, fov_degrees, near_plane, far_plane)
 
-            # Make view (observer) matrix.
-
-            view_scene = RenderableTransformer(
-                scene,
-                lambda: translate(0.0, -4.5, -25.0) @ rotate(0, 1, 0, world.time() * -0.01)
-            )
-
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             view_scene.render(m_projection)
@@ -107,24 +135,7 @@ class Application:
             glfw.poll_events()
             frame_counter += 1
 
-    @staticmethod
-    def run():
-
-        """Main entry point."""
-
-        if not glfw.init():
-            raise RuntimeError("Unable to initialize GLFW.")
-
-        # Create a GLFW window and set it as the current OpenGL context.
-
-        window = Application.create_glfw_window(4, 1)
-
-        glfw.set_framebuffer_size_callback(window, lambda *args: Application.framebuffer_size_callback(*args))
-        glfw.set_key_callback(window, lambda *args: Application.key_callback(*args))
-
-        glfw.make_context_current(window)
-
-        Application.run_with_active_gl_context(window)
+        view_scene.close()
 
         glfw.destroy_window(window)
         glfw.terminate()
