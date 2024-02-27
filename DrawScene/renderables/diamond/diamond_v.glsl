@@ -10,14 +10,7 @@ out vec3 v_color;
 
 void main()
 {
-    // Make 4D vertex from 3D value.
-    uint iz = gl_InstanceID;
-    uint ix = iz % 100; iz /= 100;
-    uint iy = iz % 100; iz /= 100;
-    iz = iz % 100;
-
-    vec3 offset = (vec3(ix, iy, iz) - 49.5) * 23.3;
-    gl_Position = mvp * vec4(a_vertex + offset, 1.0);
+    gl_Position = mvp * vec4(a_vertex, 1.0);
 
     v_color = a_color;
 }

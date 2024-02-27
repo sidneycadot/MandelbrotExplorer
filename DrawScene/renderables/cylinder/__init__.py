@@ -7,37 +7,15 @@ import numpy as np
 
 from OpenGL.GL import *
 
+from matrices import rotate, scale_xyz, apply_transform_to_vertices
+from renderables.geometry import make_cylinder_triangles
 from renderables.renderable import Renderable
 from renderables.utilities import create_opengl_program
 
 
-def make_cylinder_triangles():
-    num_rects = 36
-
-    zlo = -0.5
-    zhi = +0.5
-
-    triangles = []
-    for i in range(num_rects):
-        a0 = (i + 0) / num_rects * math.tau
-        a1 = (i + 1) / num_rects * math.tau
-
-        x0 = math.cos(a0)
-        y0 = math.sin(a0)
-        x1 = math.cos(a1)
-        y1 = math.sin(a1)
-
-        triangle = ( (x0, y0, zlo), (x1, y1, zlo), (x0, y0, zhi) )
-        triangles.append(triangle)
-        triangle = ( (x1, y1, zlo), (x1, y1, zhi), (x0, y0, zhi) )
-        triangles.append(triangle)
-
-    return triangles
-
-
 class RenderableCylinder(Renderable):
 
-    def __init__(self):
+    def __init__(self, subdivision_count: int, m_xform=None):
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "cylinder")
 
@@ -45,11 +23,13 @@ class RenderableCylinder(Renderable):
 
         self._mvp_location = glGetUniformLocation(self._shader_program, "mvp")
 
-        triangles = make_cylinder_triangles()
+        triangles = make_cylinder_triangles(subdivision_count)
 
         print("triangles:", len(triangles))
 
-        triangle_vertices = np.array(triangles, dtype=np.float32).reshape(-1, 3)
+        triangle_vertices = np.array(triangles).reshape(-1, 3)
+
+        triangle_vertices = apply_transform_to_vertices(m_xform, triangle_vertices)
 
         self._num_points = len(triangle_vertices)
 
@@ -63,7 +43,7 @@ class RenderableCylinder(Renderable):
         vbo_data = np.empty(dtype=vbo_dtype, shape=self._num_points)
 
         vbo_data["a_vertex"] = triangle_vertices
-        vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(self._num_points // 3, 3)), 3, axis=0)
+        vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(self._num_points // 6, 3)), 6, axis=0)
 
         # Make Vertex Buffer Object (VBO)
         self._vbo = glGenBuffers(1)
@@ -118,7 +98,7 @@ class RenderableCylinder(Renderable):
 
         glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, m_xform.astype(np.float32))
 
-        glEnable(GL_CULL_FACE)
+        glDisable(GL_CULL_FACE)
         glBindVertexArray(self._vao)
         glDrawArrays(GL_TRIANGLES, 0, self._num_points)
         glDisable(GL_CULL_FACE)

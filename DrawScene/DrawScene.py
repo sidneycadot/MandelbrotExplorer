@@ -5,7 +5,7 @@ import math
 import glfw
 from OpenGL.GL import *
 
-from matrices import translate, rotate, scale, projection
+from matrices import translate, rotate, scale, projection, scale_xyz
 
 from renderables import RenderableSphere, RenderableFloor, RenderableScene, RenderableTransformer, RenderableCube, \
     RenderableDiamond, RenderableCylinder
@@ -58,10 +58,12 @@ class Application:
         # Create the scene model.
         scene = RenderableScene()
 
-        scene.add_model(RenderableFloor(8.0, 8.0))
+        draw_floor = False
+        if draw_floor:
+            scene.add_model(RenderableFloor(8.0, 8.0))
 
-        render_earths = False
-        if render_earths:
+        draw_earth = False
+        if draw_earth:
 
             # add center earth with smaller earths around it.
 
@@ -85,12 +87,23 @@ class Application:
                     )
                 )
 
-        scene.add_model(
-            RenderableTransformer(
-                RenderableCylinder(),
-                lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(0, 1, 0, 0.001 * world.time())
+        draw_cylinder = False
+        if draw_cylinder:
+            scene.add_model(
+                RenderableTransformer(
+                    RenderableCylinder(12, scale_xyz(0.1, 0.1, 20)),
+                    lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(1, 0, 0, 1.1 * world.time())
+                )
             )
-        )
+
+        draw_diamond = True
+        if draw_diamond:
+            scene.add_model(
+                RenderableTransformer(
+                    RenderableDiamond(),
+                    lambda: translate(-1.5, 4.0, 1.5) @ scale(0.25) @ rotate(1, 0, 0, 0.1 * world.time())
+                )
+            )
 
         view_scene = RenderableTransformer(
             scene,

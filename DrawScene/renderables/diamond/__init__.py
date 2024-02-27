@@ -1,4 +1,4 @@
-
+import itertools
 import os
 
 import numpy as np
@@ -6,8 +6,35 @@ import numpy as np
 
 from OpenGL.GL import *
 
+from matrices import translate, apply_transform_to_vertices, scale, scale_xyz, rotate
 from renderables.renderable import Renderable
-from renderables.utilities import create_opengl_program, make_unit_sphere_triangles_v2
+from renderables.utilities import create_opengl_program
+from renderables.geometry import make_unit_sphere_triangles_v2, make_cylinder_triangles, normalize
+
+
+def make_joint_triangles(p1, p2, diameter):
+    joint_triangles = make_cylinder_triangles(36)
+    joint_triangles_vertices = np.array(joint_triangles).reshape(-1, 3)
+
+    upvec = np.array((0.0, 0.0, 1.0))
+    pvec = normalize(p2 - p1)
+
+    rvec = np.cross(upvec, pvec)
+    rangle = np.arccos(np.dot(upvec, pvec))
+
+    if np.linalg.norm(rvec) == 0:
+        if rangle > 0:
+            m_rot = scale(1.0)
+        else:
+            m_rot = scale(-1.0)
+    else:
+        m_rot = rotate(rvec[0], rvec[1], rvec[2], rangle)
+
+    m_xform = translate(p1[0], p1[1], p1[2]) @ m_rot @ scale_xyz(diameter, diameter, np.linalg.norm(p1 - p2)) @ translate(0, 0, 0.5)
+
+    joint_triangles_vertices = apply_transform_to_vertices(m_xform, joint_triangles_vertices)
+
+    return joint_triangles_vertices
 
 
 class RenderableDiamond(Renderable):
@@ -20,25 +47,66 @@ class RenderableDiamond(Renderable):
 
         self._mvp_location = glGetUniformLocation(self._shader_program, "mvp")
 
-        triangles = make_unit_sphere_triangles_v2(recursion_level=1)
-
-        print("triangles:", len(triangles))
-
-        triangle_vertices = np.array(triangles, dtype=np.float32).reshape(-1, 3)
-
-        self._num_points = len(triangle_vertices)
-
-        print("triangle_vertices shape:", triangle_vertices.shape)
-
         vbo_dtype = np.dtype([
             ("a_vertex" , np.float32, 3),
             ("a_color"  , np.float32, 3)
         ])
 
-        vbo_data = np.empty(dtype=vbo_dtype, shape=self._num_points)
+        sphere_triangles = make_unit_sphere_triangles_v2(recursion_level=2)
+        sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
 
-        vbo_data["a_vertex"] = triangle_vertices
-        vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(self._num_points // 3, 3)), 3, axis=0)
+        vbo_data_list = []
+
+        SPACING = 4.0
+
+        minq = -40
+        maxq = 40
+
+        for (ix, iy, iz) in itertools.product(range(minq, maxq + 1), repeat=3):
+            if (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2:
+
+                m_xform = translate(SPACING * ix, SPACING * iy, SPACING * iz)
+                current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
+
+                vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
+                vbo_data["a_vertex"] = current_sphere_triangle_vertices
+                vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_sphere_triangle_vertices) // 3, 3)), 3, axis=0)
+
+                vbo_data_list.append(vbo_data)
+
+                for (dx, dy, dz) in itertools.product(range(-2, 3), repeat=3):
+
+                    if dx * dx + dy * dy + dz * dz != 3:
+                        continue
+
+                    jx = ix + dx
+                    jy = iy + dy
+                    jz = iz + dz
+
+                    if not (minq <= jx <= maxq): continue
+                    if not (minq <= jy <= maxq): continue
+                    if not (minq <= jz <= maxq): continue
+
+                    if (jx - jy) % 2 == 0 and (jx - jz) % 2 == 0 and (jx + jy + jz) % 4 < 2:
+
+                        p1 = np.array((SPACING * ix, SPACING * iy, SPACING * iz))
+                        p2 = np.array((SPACING * jx, SPACING * jy, SPACING * jz))
+
+                        print("@@", (ix, iy, iz), (jx, jy, jz))
+
+                        current_joint_triangles = make_joint_triangles(p1, p2, 0.2)
+
+                        vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
+                        vbo_data["a_vertex"] = current_joint_triangles
+                        vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_joint_triangles) // 6, 3)), 6, axis=0)
+
+                        vbo_data_list.append(vbo_data)
+
+        vbo_data = np.concatenate(vbo_data_list)
+        vbo_data_list.clear()
+
+        self._num_points = len(vbo_data)
+        print("diamond vertices:", self._num_points)
 
         # Make Vertex Buffer Object (VBO)
         self._vbo = glGenBuffers(1)
@@ -95,5 +163,5 @@ class RenderableDiamond(Renderable):
 
         glEnable(GL_CULL_FACE)
         glBindVertexArray(self._vao)
-        glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, 1000000)
+        glDrawArrays(GL_TRIANGLES, 0, self._num_points)
         glDisable(GL_CULL_FACE)

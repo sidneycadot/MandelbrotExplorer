@@ -7,14 +7,15 @@ import numpy as np
 
 from OpenGL.GL import *
 
+from matrices import apply_transform_to_vertices
 from renderables.renderable import Renderable
-from renderables.sphere.sphere_triangles import make_sphere_triangles
-from renderables.utilities import create_opengl_program, make_unit_sphere_triangles_v2
+from renderables.utilities import create_opengl_program
+from renderables.geometry import make_unit_sphere_triangles_v2
 
 
 class RenderableSphere(Renderable):
 
-    def __init__(self):
+    def __init__(self, m_xform=None):
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "sphere")
 
@@ -40,24 +41,26 @@ class RenderableSphere(Renderable):
 
         print("triangles:", len(triangles))
 
-        triangle_vertices = np.array(triangles, dtype=np.float32).reshape(-1, 3)
+        triangle_vertices = np.array(triangles).reshape(-1, 3)
+
+        triangle_vertices = apply_transform_to_vertices(m_xform, triangle_vertices)
 
         print("triangle_vertices shape:", triangle_vertices.shape)
 
         vbo_dtype = np.dtype([
-            ("vertex", np.float32, 3),
-            ("texture_coordinate", np.float32, 2)
+            ("a_vertex", np.float32, 3),
+            ("a_texture_coordinate", np.float32, 2)
         ])
 
         vbo_data = np.empty(dtype=vbo_dtype, shape=(len(triangle_vertices)))
 
-        vbo_data["vertex"] = triangle_vertices
-        vbo_data["texture_coordinate"][:, 0] = 0.5 + 0.5 * np.arctan2(triangle_vertices[:, 0], triangle_vertices[:, 2]) / np.pi
-        vbo_data["texture_coordinate"][:, 1] = 0.5 - 0.5 * triangle_vertices[:, 1]
+        vbo_data["a_vertex"] = triangle_vertices
+        vbo_data["a_texture_coordinate"][:, 0] = 0.5 + 0.5 * np.arctan2(triangle_vertices[:, 0], triangle_vertices[:, 2]) / np.pi
+        vbo_data["a_texture_coordinate"][:, 1] = 0.5 - 0.5 * triangle_vertices[:, 1]
 
         # Prevent texture coordinate wrap-around.
-        vbo_data["texture_coordinate"][1::3, 0] = vbo_data["texture_coordinate"][0::3, 0] + (vbo_data["texture_coordinate"][1::3, 0] - vbo_data["texture_coordinate"][0::3, 0] + 0.5) % 1.0 - 0.5
-        vbo_data["texture_coordinate"][2::3, 0] = vbo_data["texture_coordinate"][0::3, 0] + (vbo_data["texture_coordinate"][2::3, 0] - vbo_data["texture_coordinate"][0::3, 0] + 0.5) % 1.0 - 0.5
+        vbo_data["a_texture_coordinate"][1::3, 0] = vbo_data["a_texture_coordinate"][0::3, 0] + (vbo_data["a_texture_coordinate"][1::3, 0] - vbo_data["a_texture_coordinate"][0::3, 0] + 0.5) % 1.0 - 0.5
+        vbo_data["a_texture_coordinate"][2::3, 0] = vbo_data["a_texture_coordinate"][0::3, 0] + (vbo_data["a_texture_coordinate"][2::3, 0] - vbo_data["a_texture_coordinate"][0::3, 0] + 0.5) % 1.0 - 0.5
 
         self._num_points = len(vbo_data)
 

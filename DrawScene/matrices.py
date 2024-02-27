@@ -88,3 +88,23 @@ def projection(framebuffer_width: int, framebuffer_height: int, fov_degrees: flo
         -0.5 * frustum_width, +0.5 * frustum_width,
         -0.5 * frustum_height, +0.5 * frustum_height,
         near, far, dtype=dtype)
+
+
+def apply_transform_to_vertices(m_xform, vertices):
+
+    if m_xform is None:
+        return vertices
+
+    ok = m_xform.shape == (4, 4) and (vertices.ndim == 2) and (vertices.shape[1] == 3)
+    if not ok:
+        raise ValueError("Bad transform requested.")
+
+    n = len(vertices)
+
+    all_ones_column = np.ones((n, 1), dtype=vertices.dtype)
+
+    vertices = np.hstack((vertices, all_ones_column))
+    vertices = (m_xform @ vertices.T).T
+    vertices = vertices[:, :-1]
+
+    return vertices
