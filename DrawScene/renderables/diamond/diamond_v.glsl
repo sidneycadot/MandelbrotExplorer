@@ -10,7 +10,7 @@ out vec3 v_color;
 
 void main()
 {
-    uint per_dim = 10;
+    uint per_dim = 8;
 
     uint iz = gl_InstanceID;
     uint ix = iz % per_dim; iz /= per_dim;

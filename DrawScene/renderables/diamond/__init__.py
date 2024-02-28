@@ -168,5 +168,5 @@ class RenderableDiamond(Renderable):
 
         glEnable(GL_CULL_FACE)
         glBindVertexArray(self._vao)
-        glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, 1000)
+        glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, 8*8*8)
         glDisable(GL_CULL_FACE)
