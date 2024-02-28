@@ -92,7 +92,7 @@ class Application:
             scene.add_model(
                 RenderableTransformer(
                     RenderableCylinder(12, scale_xyz(0.1, 0.1, 20)),
-                    lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(1, 0, 0, 1.1 * world.time())
+                    lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(1, 0, 0, 0.1 * world.time())
                 )
             )
 
@@ -101,7 +101,7 @@ class Application:
             scene.add_model(
                 RenderableTransformer(
                     RenderableDiamond(),
-                    lambda: translate(-1.5, 4.0, 1.5) @ scale(0.25) @ rotate(1, 0, 0, 0.1 * world.time())
+                    lambda: translate(0, 0.0, 0) @ rotate(1, 0, 0, 0.1 * world.time())
                 )
             )
 

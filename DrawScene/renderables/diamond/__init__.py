@@ -57,15 +57,24 @@ class RenderableDiamond(Renderable):
 
         vbo_data_list = []
 
-        SPACING = 4.0
+        minq = 0
+        maxq = 3
 
-        minq = -40
-        maxq = 40
+        if False:
+            # add central red sphere
+
+            m_xform = translate(2, 2, 2) @ scale(0.4)
+            current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
+
+            vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
+            vbo_data["a_vertex"] = current_sphere_triangle_vertices
+            vbo_data["a_color"] = np.repeat(((1, 0, 0), ), len(current_sphere_triangle_vertices), axis=0)
+            vbo_data_list.append(vbo_data)
 
         for (ix, iy, iz) in itertools.product(range(minq, maxq + 1), repeat=3):
             if (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2:
 
-                m_xform = translate(SPACING * ix, SPACING * iy, SPACING * iz)
+                m_xform = translate(ix, iy, iz) @ scale(0.3)
                 current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
 
                 vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
@@ -74,27 +83,23 @@ class RenderableDiamond(Renderable):
 
                 vbo_data_list.append(vbo_data)
 
-                for (dx, dy, dz) in itertools.product(range(-2, 3), repeat=3):
-
-                    if dx * dx + dy * dy + dz * dz != 3:
-                        continue
+                for (dx, dy, dz) in itertools.product((-1,1), repeat=3):
 
                     jx = ix + dx
                     jy = iy + dy
                     jz = iz + dz
 
-                    if not (minq <= jx <= maxq): continue
-                    if not (minq <= jy <= maxq): continue
-                    if not (minq <= jz <= maxq): continue
+                    if max(jx, jy, jz) > 3:
+                        continue
 
                     if (jx - jy) % 2 == 0 and (jx - jz) % 2 == 0 and (jx + jy + jz) % 4 < 2:
 
-                        p1 = np.array((SPACING * ix, SPACING * iy, SPACING * iz))
-                        p2 = np.array((SPACING * jx, SPACING * jy, SPACING * jz))
+                        p1 = np.array((ix, iy, iz))
+                        p2 = np.array((jx, jy, jz))
 
                         print("@@", (ix, iy, iz), (jx, jy, jz))
 
-                        current_joint_triangles = make_joint_triangles(p1, p2, 0.2)
+                        current_joint_triangles = make_joint_triangles(p1, p2, 0.1)
 
                         vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
                         vbo_data["a_vertex"] = current_joint_triangles
@@ -163,5 +168,5 @@ class RenderableDiamond(Renderable):
 
         glEnable(GL_CULL_FACE)
         glBindVertexArray(self._vao)
-        glDrawArrays(GL_TRIANGLES, 0, self._num_points)
+        glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, 1000)
         glDisable(GL_CULL_FACE)
