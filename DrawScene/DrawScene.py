@@ -101,7 +101,7 @@ class Application:
             scene.add_model(
                 RenderableTransformer(
                     RenderableDiamond(),
-                    lambda: translate(0, 0.0, 0) @ rotate(1, 0, 0, 0.1 * world.time())
+                    lambda: translate(0, 0.0, 0) @ scale(math.exp(2 * math.sin(world.time()))) @ rotate(1, 0, 0, 0.1 * world.time())
                 )
             )
 
