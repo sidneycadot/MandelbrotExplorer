@@ -8,8 +8,8 @@ from OpenGL.GL import *
 
 from matrices import translate, apply_transform_to_vertices, scale, rotate, apply_transform_to_normals
 from renderables.renderable import Renderable
-from renderables.utilities import create_opengl_program
-from renderables.geometry import make_unit_sphere_triangles_v2, make_cylinder_triangles, normalize
+from renderables.opengl_utilities import create_opengl_program
+from renderables.geometry import make_unit_sphere_triangles, make_cylinder_triangles, normalize
 
 
 def make_joint_triangles(p1, p2, diameter, subdivision_count):
@@ -48,7 +48,10 @@ class RenderableDiamond(Renderable):
 
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
-        self._mvp_location = glGetUniformLocation(self._shader_program, "mvp")
+        self._m_projection_location = glGetUniformLocation(self._shader_program, "m_projection")
+        self._m_view_location = glGetUniformLocation(self._shader_program, "m_view")
+        self._m_model_location = glGetUniformLocation(self._shader_program, "m_model")
+
         self._cells_per_dimension_location = glGetUniformLocation(self._shader_program, "cells_per_dimension")
 
         vbo_dtype = np.dtype([
@@ -57,7 +60,7 @@ class RenderableDiamond(Renderable):
             ("a_color"  , np.float32, 3)
         ])
 
-        sphere_triangles = make_unit_sphere_triangles_v2(recursion_level=2)
+        sphere_triangles = make_unit_sphere_triangles(recursion_level=2)
         sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
         sphere_triangle_normals = np.array(sphere_triangles).reshape(-1, 3)
 
@@ -172,13 +175,15 @@ class RenderableDiamond(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
-    def render(self, m_xform):
+    def render(self, m_projection, m_view, m_model):
 
-        cells_per_dimension = 6
+        cells_per_dimension = 10
 
         glUseProgram(self._shader_program)
 
-        glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, m_xform.astype(np.float32))
+        glUniformMatrix4fv(self._m_projection_location, 1, GL_TRUE, m_projection.astype(np.float32))
+        glUniformMatrix4fv(self._m_view_location, 1, GL_TRUE, m_view.astype(np.float32))
+        glUniformMatrix4fv(self._m_model_location, 1, GL_TRUE, m_model.astype(np.float32))
 
         glUniform1ui(self._cells_per_dimension_location, cells_per_dimension)
 

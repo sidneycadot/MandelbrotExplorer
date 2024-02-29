@@ -2,7 +2,7 @@
 from renderables.renderable import Renderable
 
 
-class RenderableTransformer(Renderable):
+class RenderableModelTransformer(Renderable):
 
     def __init__(self, model, func):
         self._model = model
@@ -13,6 +13,6 @@ class RenderableTransformer(Renderable):
         self._model = None
         self._func = None
 
-    def render(self, m_xform):
+    def render(self, m_projection, m_view, m_model):
         m_func = self._func()
-        self._model.render(m_xform @ m_func)
+        self._model.render(m_projection, m_view, m_model @ m_func)

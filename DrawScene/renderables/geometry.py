@@ -1,13 +1,16 @@
+"""Construct geometric objects as lists of triangles."""
 
-import math
 import numpy as np
 
 
-def normalize(v):
-    return v / np.linalg.norm(v)
+def normalize(v) -> np.ndarray:
+    """Normalize a vector."""
+    vec = np.asarray(v)
+    return vec / np.linalg.norm(vec)
 
 
-def _make_unit_sphere_triangles_recursive(triangle, recursion_level: int):
+def _make_unit_sphere_triangles_recursive(triangle, recursion_level: int) -> list:
+    """Perform recursive triangle subdivision and normalization to unit length."""
     if recursion_level == 0:
         return [triangle]
 
@@ -27,12 +30,13 @@ def _make_unit_sphere_triangles_recursive(triangle, recursion_level: int):
     return triangles
 
 
-def make_unit_sphere_triangles(recursion_level: int):
+def make_unit_sphere_triangles_tetrahedron(recursion_level: int):
+    """Make unit sphere by subdividing a tetrahedron."""
 
-    v1 = normalize(np.array((-1.0, -1.0, -1.0)))
-    v2 = normalize(np.array((+1.0, +1.0, -1.0)))
-    v3 = normalize(np.array((+1.0, -1.0, +1.0)))
-    v4 = normalize(np.array((-1.0, +1.0, +1.0)))
+    v1 = normalize((-1.0, -1.0, -1.0))
+    v2 = normalize((+1.0, +1.0, -1.0))
+    v3 = normalize((+1.0, -1.0, +1.0))
+    v4 = normalize((-1.0, +1.0, +1.0))
 
     t1 = (v1, v2, v3)
     t2 = (v1, v4, v2)
@@ -49,48 +53,34 @@ def make_unit_sphere_triangles(recursion_level: int):
     return triangles
 
 
-def make_unit_sphere_triangles_v2(recursion_level: int):
+def make_unit_sphere_triangles(recursion_level: int):
+    """Make unit sphere by subdividing a dodecahedron."""
 
-    Q = math.sqrt(5)
-    R = math.sqrt((5 - Q)/10)
-    S = math.sqrt((5 + Q)/10)
+    q = np.sqrt(5)
+    r = np.sqrt((5 - q)/10)
+    s = np.sqrt((5 + q)/10)
 
     vertices = [
-        np.array((       0   , 0,  -1  )),
-        np.array((       0   , 0,   1  )),
-        np.array((    -2/Q   , 0,  -1/Q)),
-        np.array((     2/Q   , 0,   1/Q)),
-        np.array((( 5 + Q)/10, -R, -1/Q)),
-        np.array((( 5 + Q)/10,  R, -1/Q)),
-        np.array(((-5 - Q)/10, -R,  1/Q)),
-        np.array(((-5 - Q)/10,  R,  1/Q)),
-        np.array(((-5 + Q)/10, -S, -1/Q)),
-        np.array(((-5 + Q)/10,  S, -1/Q)),
-        np.array((( 5 - Q)/10, -S,  1/Q)),
-        np.array((( 5 - Q)/10,  S,  1/Q))
+        np.asarray((0, 0,  -1)),
+        np.asarray((0, 0,   1)),
+        np.asarray((-2/q, 0,  -1/q)),
+        np.asarray((+2/q, 0,   1/q)),
+        np.asarray(((5 + q)/10, -r, -1/q)),
+        np.asarray(((5 + q)/10,  r, -1/q)),
+        np.asarray(((-5 - q)/10, -r,  1/q)),
+        np.asarray(((-5 - q)/10,  r,  1/q)),
+        np.asarray(((-5 + q)/10, -s, -1/q)),
+        np.asarray(((-5 + q)/10,  s, -1/q)),
+        np.asarray(((5 - q)/10, -s,  1/q)),
+        np.asarray(((5 - q)/10,  s,  1/q))
     ]
 
     face_definitions = [
-        (1, 11, 7),
-        (1, 7, 6),
-        (1, 6, 10),
-        (1, 10, 3),
-        (1, 3, 11),
-        (4, 8, 0),
-        (5, 4, 0),
-        (9, 5, 0),
-        (2, 9, 0),
-        (8, 2, 0),
-        (11, 9, 7),
-        (7, 2, 6),
-        (6, 8, 10),
-        (10, 4, 3),
-        (3, 5, 11),
-        (4, 10, 8),
-        (5, 3, 4),
-        (9, 11, 5),
-        (2, 7, 9),
-        (8, 6, 2)
+        (1, 11, 7), (1, 7, 6), (1, 6, 10), (1, 10, 3),
+        (1, 3, 11), (4, 8, 0), (5, 4, 0), (9, 5, 0),
+        (2, 9, 0), (8, 2, 0), (11, 9, 7), (7, 2, 6),
+        (6, 8, 10), (10, 4, 3), (3, 5, 11), (4, 10, 8),
+        (5, 3, 4), (9, 11, 5), (2, 7, 9), (8, 6, 2)
     ]
 
     triangles = []
@@ -110,13 +100,13 @@ def make_cylinder_triangles(subdivision_count) -> tuple[list, list]:
     normals = []
     triangles = []
     for i in range(subdivision_count):
-        a0 = (i + 0) / subdivision_count * math.tau
-        a1 = (i + 1) / subdivision_count * math.tau
+        a0 = (i + 0) / subdivision_count * 2.0 * np.pi
+        a1 = (i + 1) / subdivision_count * 2.0 * np.pi
 
-        x0 = math.cos(a0)
-        y0 = math.sin(a0)
-        x1 = math.cos(a1)
-        y1 = math.sin(a1)
+        x0 = np.cos(a0)
+        y0 = np.sin(a0)
+        x1 = np.cos(a1)
+        y1 = np.sin(a1)
 
         triangle = ((x0, y0, zlo), (x1, y1, zlo), (x0, y0, zhi))
         normal = ((x0, y0, 0), (x1, y1, 0), (x0, y0, 0))
@@ -128,4 +118,4 @@ def make_cylinder_triangles(subdivision_count) -> tuple[list, list]:
         triangles.append(triangle)
         normals.append(normal)
 
-    return (triangles, normals)
+    return triangles, normals

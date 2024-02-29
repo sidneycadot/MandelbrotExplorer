@@ -15,6 +15,6 @@ class RenderableScene(Renderable):
     def add_model(self, model):
         self._models.append(model)
 
-    def render(self, m_xform):
+    def render(self, m_projection, m_view, m_model):
         for model in self._models:
-            model.render(m_xform)
+            model.render(m_projection, m_view, m_model)

@@ -10,7 +10,7 @@ from OpenGL.GL import *
 from matrices import rotate, scale, apply_transform_to_vertices
 from renderables.geometry import make_cylinder_triangles
 from renderables.renderable import Renderable
-from renderables.utilities import create_opengl_program
+from renderables.opengl_utilities import create_opengl_program
 
 
 class RenderableCylinder(Renderable):
@@ -92,13 +92,12 @@ class RenderableCylinder(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
-    def render(self, m_xform):
+    def render(self, m_projection, m_view, m_model):
 
         glUseProgram(self._shader_program)
 
-        glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, m_xform.astype(np.float32))
+        mvp = m_projection @ m_view @ m_model
+        glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, mvp.astype(np.float32))
 
-        glDisable(GL_CULL_FACE)
         glBindVertexArray(self._vao)
         glDrawArrays(GL_TRIANGLES, 0, self._num_points)
-        glDisable(GL_CULL_FACE)

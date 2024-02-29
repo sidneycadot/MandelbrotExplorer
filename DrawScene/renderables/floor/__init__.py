@@ -6,7 +6,7 @@ import numpy as np
 from OpenGL.GL import *
 
 from renderables.renderable import Renderable
-from renderables.utilities import create_opengl_program
+from renderables.opengl_utilities import create_opengl_program
 
 
 class RenderableFloor(Renderable):
@@ -71,11 +71,11 @@ class RenderableFloor(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
-    def render(self, m_xform):
+    def render(self, m_projection, m_view, m_model):
 
         glUseProgram(self._shader_program)
 
-        mvp = m_xform
+        mvp = m_projection @ m_view @ m_model
         glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, mvp.astype(np.float32))
 
         glBindVertexArray(self._vao)

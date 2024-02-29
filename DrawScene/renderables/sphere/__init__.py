@@ -9,8 +9,8 @@ from OpenGL.GL import *
 
 from matrices import apply_transform_to_vertices
 from renderables.renderable import Renderable
-from renderables.utilities import create_opengl_program
-from renderables.geometry import make_unit_sphere_triangles_v2
+from renderables.opengl_utilities import create_opengl_program
+from renderables.geometry import make_unit_sphere_triangles, make_unit_sphere_triangles_tetrahedron
 
 
 class RenderableSphere(Renderable):
@@ -37,7 +37,7 @@ class RenderableSphere(Renderable):
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[1], image.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
 
-        triangles = make_unit_sphere_triangles_v2(recursion_level=4)
+        triangles = make_unit_sphere_triangles(recursion_level=4)
 
         print("triangles:", len(triangles))
 
@@ -111,11 +111,12 @@ class RenderableSphere(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
-    def render(self, m_xform):
+    def render(self, m_projection, m_view, m_model):
 
         glUseProgram(self._shader_program)
 
-        glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, m_xform.astype(np.float32))
+        mvp = m_projection @ m_view @ m_model
+        glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, mvp.astype(np.float32))
 
         glBindVertexArray(self._vao)
         glDrawArrays(GL_TRIANGLES, 0, self._num_points)
