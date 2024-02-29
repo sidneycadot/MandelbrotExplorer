@@ -51,8 +51,6 @@ class Application:
 
         glfw.make_context_current(window)
 
-        glfw.swap_interval(1)
-        glPointSize(1)
         world = World()
 
         # Create the scene model.
@@ -87,33 +85,27 @@ class Application:
                     )
                 )
 
-        draw_cylinder = False
-        if draw_cylinder:
-            scene.add_model(
-                RenderableTransformer(
-                    RenderableCylinder(12, scale_xyz(0.1, 0.1, 20)),
-                    lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(1, 0, 0, 0.1 * world.time())
-                )
-            )
-
         draw_diamond = True
         if draw_diamond:
             scene.add_model(
                 RenderableTransformer(
                     RenderableDiamond(),
-                    lambda: translate(0, 0.0, 0) @ rotate(1, 0, 0, 0.1 * world.time())
+                    lambda: translate(0, 0.0, 0) @ rotate(1, 0, 0, 0.2 * world.time()) @ rotate(0, 0, 1, 0.3 * world.time()) @ rotate(0, 1, 0, 0.1 * world.time())
                 )
             )
 
         view_scene = RenderableTransformer(
             scene,
-            lambda: translate(0.0, -2.5, -25.0) @ rotate(0, 1, 0, world.time() * 0)
+            lambda: translate(0.0, 0.0, -25.0) @ rotate(0, 1, 0, world.time() * 0.0)
         )
 
         # Prepare loop.
 
         frame_counter = 0
         t_prev = None
+
+        glfw.swap_interval(1)
+        glPointSize(1)
 
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
@@ -130,7 +122,7 @@ class Application:
             t_now = glfw.get_time()
             if t_prev is not None:
                 frame_duration = (t_now - t_prev)
-                # print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
+                #print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
             t_prev = t_now
 
             world.set_time(t_now)

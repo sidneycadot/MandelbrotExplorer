@@ -108,3 +108,29 @@ def apply_transform_to_vertices(m_xform, vertices):
     vertices = vertices[:, :-1]
 
     return vertices
+
+
+def apply_transform_to_normals(m_xform, normals):
+
+    if m_xform is None:
+        return normals
+
+    ok = m_xform.shape == (4, 4) and (normals.ndim == 2) and (normals.shape[1] == 3)
+    if not ok:
+        raise ValueError("Bad transform requested.")
+
+    n = len(normals)
+
+    all_zeros_column = np.zeros((n, 1), dtype=normals.dtype)
+
+    normals = np.hstack((normals, all_zeros_column))
+    normals = (np.linalg.inv(m_xform).T @ normals.T).T
+    normals = normals[:, :-1]
+
+    # Normalize normals.
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
+
+    if not np.all(np.abs(np.linalg.norm(normals, axis=1) - 1.0) < 1e-12):
+        raise RuntimeError("normals are not unit length after normalization.")
+
+    return normals
