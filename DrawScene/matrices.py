@@ -3,52 +3,62 @@
 import numpy as np
 
 
-def translate(tx: float, ty: float, tz: float, dtype=None) -> np.ndarray:
+def translate(translation_vector, dtype=None) -> np.ndarray:
     """Return a 4x4 translation matrix."""
 
     if dtype is None:
         dtype = np.float64
 
+    t = np.asarray(translation_vector, dtype=dtype)
+
+    if t.shape != (3, ):
+        raise ValueError("Bad translation_vector argument.")
+
     return np.array([
-        [ 1, 0, 0, tx],
-        [ 0, 1, 0, ty],
-        [ 0, 0, 1, tz],
+        [ 1, 0, 0, t[0]],
+        [ 0, 1, 0, t[1]],
+        [ 0, 0, 1, t[2]],
         [ 0, 0, 0,  1]
     ], dtype=dtype)
 
 
-def scale_xyz(sx: float, sy: float, sz: float, dtype=None):
-    """Return a 4x4 matrix for general scaling."""
+def scale(scale_coefficients, dtype=None):
+    """Return a 4x4 matrix for general per-dimension scaling.
+
+    The scale argument should either be a 1- or 3-element vector of scale coefficients.
+    """
 
     if dtype is None:
         dtype = np.float64
 
+    s = np.asarray(scale_coefficients, dtype=dtype)
+
+    if s.ndim == 0:
+        s = np.repeat(s, 3)
+
+    if s.shape != (3, ):
+        raise ValueError("Bad scale_coefficients argument.")
+
     return np.array([
-        [ sx,  0,  0,  0],
-        [  0, sy,  0,  0],
-        [  0,  0, sz,  0],
-        [  0,  0,  0,  1]
+        [s[0], 0, 0, 0],
+        [0, s[1], 0, 0],
+        [0, 0, s[2], 0],
+        [0, 0, 0, 1]
     ], dtype=dtype)
 
 
-def scale(s: float, dtype=None):
-    """Return a 4x4 matrix for uniform scaling."""
-    return scale_xyz(s, s, s, dtype)
-
-
-def rotate(rx: float, ry: float, rz: float, angle: float, dtype=None):
+def rotate(rotation_axis, angle: float, dtype=None):
     """Return a rotation matrix."""
 
     if dtype is None:
         dtype = np.float64
 
-    length = np.sqrt(rx * rx + ry * ry + rz * rz)
-    if length == 0.0:
-        raise ValueError()
+    r = np.asarray(rotation_axis, dtype=dtype)
 
-    nx = rx / length
-    ny = ry / length
-    nz = rz / length
+    if r.shape != (3, ):
+        raise ValueError("Bad rotation_axis argument.")
+
+    r /= np.linalg.norm(r)
 
     ca = np.cos(angle)
     sa = np.sin(angle)
@@ -56,24 +66,32 @@ def rotate(rx: float, ry: float, rz: float, angle: float, dtype=None):
     cca = 1 - ca
 
     return np.array([
-        [ cca * nx * nx +      ca , cca * ny * nx - nz * sa , cca * nz * nx + ny * sa , 0 ],
-        [ cca * nx * ny + nz * sa , cca * ny * ny +      ca , cca * nz * ny - nx * sa , 0 ],
-        [ cca * nx * nz - ny * sa , cca * ny * nz + nx * sa , cca * nz * nz +      ca , 0 ],
-        [          0              ,          0              ,          0              , 1 ]
+        [cca * r[0] * r[0] + ca, cca * r[1] * r[0] - r[2] * sa, cca * r[2] * r[0] + r[1] * sa, 0],
+        [cca * r[0] * r[1] + r[2] * sa, cca * r[1] * r[1] + ca, cca * r[2] * r[1] - r[0] * sa, 0],
+        [cca * r[0] * r[2] - r[1] * sa, cca * r[1] * r[2] + r[0] * sa, cca * r[2] * r[2] + ca, 0],
+        [0, 0, 0, 1]
     ], dtype=dtype)
 
 
 def frustum(left: float, right: float, bottom: float, top: float, near: float, far: float, dtype=None):
     """Return a frustum projection matrix."""
+
+    if dtype is None:
+        dtype = np.float64
+
     return np.array([
-        [ 2.0 * near / (right - left) ,            0                , (right + left) / (right - left) ,                 0               ],
-        [            0                , 2.0 * near / (top - bottom) , (top + bottom) / (top - bottom) ,                 0               ],
-        [            0                ,            0                , (far + near)   / (near - far)   , 2.0 * far * near / (near - far) ],
-        [            0                ,            0                ,               -1                ,                 0               ]
+        [2 * near / (right - left), 0, (right + left) / (right - left), 0],
+        [0, 2 * near / (top - bottom), (top + bottom) / (top - bottom), 0],
+        [0, 0, (far + near) / (near - far), 2 * far * near / (near - far)],
+        [0, 0, -1, 0]
     ], dtype=dtype)
 
 
-def projection(framebuffer_width: int, framebuffer_height: int, fov_degrees: float, near: float, far: float, dtype=None):
+def perspective_projection(framebuffer_width: int, framebuffer_height: int, fov_degrees: float, near: float, far: float, dtype=None):
+    """Return a perspective projection matrix."""
+
+    if dtype is None:
+        dtype = np.float64
 
     fov_radians = np.radians(fov_degrees)
 
@@ -90,8 +108,8 @@ def projection(framebuffer_width: int, framebuffer_height: int, fov_degrees: flo
         near, far, dtype=dtype)
 
 
-def apply_transform_to_vertices(m_xform, vertices):
-
+def apply_transform_to_vertices(m_xform: np.ndarray, vertices: np.ndarray) -> np.ndarray:
+    """Apply the given transform to the given array of vertices."""
     if m_xform is None:
         return vertices
 
@@ -110,7 +128,8 @@ def apply_transform_to_vertices(m_xform, vertices):
     return vertices
 
 
-def apply_transform_to_normals(m_xform, normals):
+def apply_transform_to_normals(m_xform: np.ndarray, normals: np.ndarray) -> np.ndarray:
+    """Apply the given transform to the given array of normal vectors."""
 
     if m_xform is None:
         return normals

@@ -23,6 +23,6 @@ void main()
 
     gl_Position = mvp * vec4(a_vertex + offset, 1.0);
 
-    //v_normal = normalize(transpose(inverse(mvp)) * vec4(a_normal, 0.0)).xyz;
+    v_normal = normalize((transpose(inverse(mvp)) * vec4(a_normal, 0.0)).xyz);
     v_color = a_color;
 }

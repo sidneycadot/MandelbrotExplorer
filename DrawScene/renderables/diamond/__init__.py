@@ -6,7 +6,7 @@ import numpy as np
 
 from OpenGL.GL import *
 
-from matrices import translate, apply_transform_to_vertices, scale, scale_xyz, rotate, apply_transform_to_normals
+from matrices import translate, apply_transform_to_vertices, scale, rotate, apply_transform_to_normals
 from renderables.renderable import Renderable
 from renderables.utilities import create_opengl_program
 from renderables.geometry import make_unit_sphere_triangles_v2, make_cylinder_triangles, normalize
@@ -29,10 +29,10 @@ def make_joint_triangles(p1, p2, diameter, subdivision_count):
         else:
             m_rot = scale(-1.0)
     else:
-        m_rot = rotate(rvec[0], rvec[1], rvec[2], rangle)
+        m_rot = rotate(rvec, rangle)
 
     # Get the requested cylinder from a unit cylinder by applying a translation, scaling, rotation, and translation.
-    m_xform = translate(p1[0], p1[1], p1[2]) @ m_rot @ scale_xyz(diameter, diameter, np.linalg.norm(p1 - p2)) @ translate(0, 0, 0.5)
+    m_xform = translate((p1[0], p1[1], p1[2])) @ m_rot @ scale((diameter, diameter, np.linalg.norm(p1 - p2))) @ translate((0, 0, 0.5))
 
     joint_triangles_vertices = apply_transform_to_vertices(m_xform, joint_triangles_vertices)
     joint_triangles_normals = apply_transform_to_normals(m_xform, joint_triangles_normals)
@@ -80,7 +80,7 @@ class RenderableDiamond(Renderable):
         for (ix, iy, iz) in itertools.product(range(4), repeat=3):
             if (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2:
 
-                m_xform = translate(ix, iy, iz) @ scale(0.3)
+                m_xform = translate((ix, iy, iz)) @ scale(0.3)
 
                 current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
                 current_sphere_triangle_normals = apply_transform_to_normals(m_xform, sphere_triangle_normals)
@@ -174,7 +174,7 @@ class RenderableDiamond(Renderable):
 
     def render(self, m_xform):
 
-        cells_per_dimension = 12
+        cells_per_dimension = 6
 
         glUseProgram(self._shader_program)
 

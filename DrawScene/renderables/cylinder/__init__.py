@@ -7,7 +7,7 @@ import numpy as np
 
 from OpenGL.GL import *
 
-from matrices import rotate, scale_xyz, apply_transform_to_vertices
+from matrices import rotate, scale, apply_transform_to_vertices
 from renderables.geometry import make_cylinder_triangles
 from renderables.renderable import Renderable
 from renderables.utilities import create_opengl_program
