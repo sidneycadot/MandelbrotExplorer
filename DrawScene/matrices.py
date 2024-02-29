@@ -1,4 +1,4 @@
-"""OpenGL matrices."""
+"""Construct OpenGL transformation matrices and apply them."""
 
 import numpy as np
 
@@ -15,14 +15,14 @@ def translate(translation_vector, dtype=None) -> np.ndarray:
         raise ValueError("Bad translation_vector argument.")
 
     return np.array([
-        [ 1, 0, 0, t[0]],
-        [ 0, 1, 0, t[1]],
-        [ 0, 0, 1, t[2]],
-        [ 0, 0, 0,  1]
+        [1, 0, 0, t[0]],
+        [0, 1, 0, t[1]],
+        [0, 0, 1, t[2]],
+        [0, 0, 0,  1]
     ], dtype=dtype)
 
 
-def scale(scale_coefficients, dtype=None):
+def scale(scale_coefficients, dtype=None) -> np.ndarray:
     """Return a 4x4 matrix for general per-dimension scaling.
 
     The scale argument should either be a 1- or 3-element vector of scale coefficients.
@@ -47,7 +47,7 @@ def scale(scale_coefficients, dtype=None):
     ], dtype=dtype)
 
 
-def rotate(rotation_axis, angle: float, dtype=None):
+def rotate(rotation_axis, angle: float, dtype=None) -> np.ndarray:
     """Return a rotation matrix."""
 
     if dtype is None:
@@ -73,7 +73,7 @@ def rotate(rotation_axis, angle: float, dtype=None):
     ], dtype=dtype)
 
 
-def frustum(left: float, right: float, bottom: float, top: float, near: float, far: float, dtype=None):
+def frustum(left: float, right: float, bottom: float, top: float, near: float, far: float, dtype=None) -> np.ndarray:
     """Return a frustum projection matrix."""
 
     if dtype is None:
@@ -87,7 +87,8 @@ def frustum(left: float, right: float, bottom: float, top: float, near: float, f
     ], dtype=dtype)
 
 
-def perspective_projection(framebuffer_width: int, framebuffer_height: int, fov_degrees: float, near: float, far: float, dtype=None):
+def perspective_projection(framebuffer_width: int, framebuffer_height: int,
+                           fov_degrees: float, near: float, far: float, dtype=None) -> np.ndarray:
     """Return a perspective projection matrix."""
 
     if dtype is None:
@@ -146,7 +147,7 @@ def apply_transform_to_normals(m_xform: np.ndarray, normals: np.ndarray) -> np.n
     normals = (np.linalg.inv(m_xform).T @ normals.T).T
     normals = normals[:, :-1]
 
-    # Normalize normals.
+    # Normalize normals to unit length.
     normals /= np.linalg.norm(normals, axis=1, keepdims=True)
 
     if not np.all(np.abs(np.linalg.norm(normals, axis=1) - 1.0) < 1e-12):
