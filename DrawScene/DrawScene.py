@@ -5,7 +5,7 @@ import math
 import glfw
 from OpenGL.GL import *
 
-from matrices import translate, rotate, scale, projection, scale_xyz
+from matrices import translate, rotate, scale, perspective_projection
 
 from renderables import RenderableSphere, RenderableFloor, RenderableScene, RenderableTransformer, RenderableCube, \
     RenderableDiamond, RenderableCylinder
@@ -51,14 +51,12 @@ class Application:
 
         glfw.make_context_current(window)
 
-        glfw.swap_interval(1)
-        glPointSize(1)
         world = World()
 
         # Create the scene model.
         scene = RenderableScene()
 
-        draw_floor = False
+        draw_floor = True
         if draw_floor:
             scene.add_model(RenderableFloor(8.0, 8.0))
 
@@ -72,48 +70,42 @@ class Application:
             scene.add_model(
                 RenderableTransformer(
                     earth,
-                     lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(0, 1, 0, world.time())
+                     lambda: translate((0, 0.0, 0)) @ scale(4.0) @ rotate((0, 1, 0), world.time())
                 )
             )
 
-            num_around = 0
+            num_around = 6
             for ei_ in range(num_around):
                 scene.add_model(
                     RenderableTransformer(
                         earth,
                         (lambda ei:
-                         lambda: translate(6.5 * math.cos(ei / num_around * math.tau), 6.5 * math.sin(ei / num_around * math.tau), 0.0) @ scale(2.0) @ rotate(1, 0, 0, world.time())
+                         lambda: translate((6.5 * math.cos(ei / num_around * math.tau), 6.5 * math.sin(ei / num_around * math.tau), 0.0)) @ scale(2.0) @ rotate((1, 0, 0), world.time())
                          )(ei_)
                     )
                 )
-
-        draw_cylinder = False
-        if draw_cylinder:
-            scene.add_model(
-                RenderableTransformer(
-                    RenderableCylinder(12, scale_xyz(0.1, 0.1, 20)),
-                    lambda: translate(0, 4.0, 0) @ scale(4.0) @ rotate(1, 0, 0, 0.1 * world.time())
-                )
-            )
 
         draw_diamond = True
         if draw_diamond:
             scene.add_model(
                 RenderableTransformer(
                     RenderableDiamond(),
-                    lambda: translate(0, 0.0, 0) @ scale(math.exp(2 * math.sin(world.time()))) @ rotate(1, 0, 0, 0.1 * world.time())
+                    lambda: translate((0, 0.0, 0)) @ rotate((1, 0, 0), 0.2 * world.time()) @ rotate((0, 0, 1), 0.3 * world.time()) @ rotate((0, 1, 0), 0.1 * world.time())
                 )
             )
 
         view_scene = RenderableTransformer(
             scene,
-            lambda: translate(0.0, -2.5, -25.0) @ rotate(0, 1, 0, world.time() * 0)
+            lambda: translate((0.0, 0.0, -35.0)) @ rotate((0, 1, 0), world.time() * 0.0)
         )
 
         # Prepare loop.
 
         frame_counter = 0
         t_prev = None
+
+        glfw.swap_interval(1)
+        glPointSize(1)
 
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
@@ -130,7 +122,7 @@ class Application:
             t_now = glfw.get_time()
             if t_prev is not None:
                 frame_duration = (t_now - t_prev)
-                # print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
+                #print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
             t_prev = t_now
 
             world.set_time(t_now)
@@ -138,7 +130,7 @@ class Application:
             # Make perspective projection matrix.
 
             (framebuffer_width, framebuffer_height) = glfw.get_framebuffer_size(window)
-            m_projection = projection(framebuffer_width, framebuffer_height, fov_degrees, near_plane, far_plane)
+            m_projection = perspective_projection(framebuffer_width, framebuffer_height, fov_degrees, near_plane, far_plane)
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 

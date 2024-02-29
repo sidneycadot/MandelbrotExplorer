@@ -2,6 +2,7 @@
 import math
 import numpy as np
 
+
 def normalize(v):
     return v / np.linalg.norm(v)
 
@@ -100,30 +101,31 @@ def make_unit_sphere_triangles_v2(recursion_level: int):
 
     return triangles
 
-def make_cylinder_triangles(subdivision_count):
+
+def make_cylinder_triangles(subdivision_count) -> tuple[list, list]:
 
     zlo = -0.5
     zhi = +0.5
 
+    normals = []
     triangles = []
     for i in range(subdivision_count):
-        a0 = (i + 0.0) / subdivision_count * math.tau
-        a1 = (i + 0.5) / subdivision_count * math.tau
-        a2 = (i + 1.0) / subdivision_count * math.tau
-        a3 = (i + 1.5) / subdivision_count * math.tau
+        a0 = (i + 0) / subdivision_count * math.tau
+        a1 = (i + 1) / subdivision_count * math.tau
 
         x0 = math.cos(a0)
         y0 = math.sin(a0)
         x1 = math.cos(a1)
         y1 = math.sin(a1)
-        x2 = math.cos(a2)
-        y2 = math.sin(a2)
-        x3 = math.cos(a3)
-        y3 = math.sin(a3)
 
-        triangle = ( (x0, y0, zlo), (x2, y2, zlo), (x0, y0, zhi) )
+        triangle = ((x0, y0, zlo), (x1, y1, zlo), (x0, y0, zhi))
+        normal = ((x0, y0, 0), (x1, y1, 0), (x0, y0, 0))
         triangles.append(triangle)
-        triangle = ( (x2, y2, zlo), (x2, y2, zhi), (x0, y0, zhi) )
-        triangles.append(triangle)
+        normals.append(normal)
 
-    return triangles
+        triangle = ((x1, y1, zlo), (x1, y1, zhi), (x0, y0, zhi))
+        normal = ((x1, y1, 0), (x1, y1, 0), (x0, y0, 0))
+        triangles.append(triangle)
+        normals.append(normal)
+
+    return (triangles, normals)
