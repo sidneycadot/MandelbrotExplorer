@@ -9,7 +9,8 @@ from OpenGL.GL import *
 from matrices import translate, apply_transform_to_vertices, scale, rotate, apply_transform_to_normals
 from renderables.renderable import Renderable
 from renderables.opengl_utilities import create_opengl_program
-from renderables.geometry import make_unit_sphere_triangles, make_cylinder_triangles, normalize
+from renderables.geometry import make_unit_sphere_triangles, make_cylinder_triangles, normalize, \
+    make_unit_sphere_triangles_tetrahedron
 
 
 def make_joint_triangles(p1, p2, diameter, subdivision_count):
@@ -45,14 +46,20 @@ class RenderableDiamond(Renderable):
     def __init__(self):
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "diamond")
-
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
         self._m_projection_location = glGetUniformLocation(self._shader_program, "m_projection")
         self._m_view_location = glGetUniformLocation(self._shader_program, "m_view")
         self._m_model_location = glGetUniformLocation(self._shader_program, "m_model")
-
         self._cells_per_dimension_location = glGetUniformLocation(self._shader_program, "cells_per_dimension")
+
+        shader_source_path = os.path.join(os.path.dirname(__file__), "diamond_normals")
+        (self._shaders2, self._shader_program2) = create_opengl_program(shader_source_path)
+
+        self._m_projection_location2 = glGetUniformLocation(self._shader_program2, "m_projection")
+        self._m_view_location2 = glGetUniformLocation(self._shader_program2, "m_view")
+        self._m_model_location2 = glGetUniformLocation(self._shader_program2, "m_model")
+        self._cells_per_dimension_location2 = glGetUniformLocation(self._shader_program, "cells_per_dimension")
 
         vbo_dtype = np.dtype([
             ("a_vertex" , np.float32, 3),
@@ -60,7 +67,8 @@ class RenderableDiamond(Renderable):
             ("a_color"  , np.float32, 3)
         ])
 
-        sphere_triangles = make_unit_sphere_triangles(recursion_level=2)
+        sphere_triangles = make_unit_sphere_triangles(recursion_level=3)
+        #sphere_triangles = make_unit_sphere_triangles_tetrahedron(recursion_level=3)
         sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
         sphere_triangle_normals = np.array(sphere_triangles).reshape(-1, 3)
 
@@ -70,7 +78,7 @@ class RenderableDiamond(Renderable):
         if add_red_center_spheres:
             # add central red sphere
 
-            m_xform = translate(2, 2, 2) @ scale(0.3)
+            m_xform = translate((2, 2, 2)) @ scale(1.25)
             current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
             current_sphere_triangle_normals = apply_transform_to_normals(m_xform, sphere_triangle_normals)
 
@@ -80,43 +88,45 @@ class RenderableDiamond(Renderable):
             vbo_data["a_color"] = np.repeat(((1, 0, 0), ), len(current_sphere_triangle_vertices), axis=0)
             vbo_data_list.append(vbo_data)
 
-        for (ix, iy, iz) in itertools.product(range(4), repeat=3):
-            if (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2:
+        add_diamond_geometry = True
+        if add_diamond_geometry:
+            for (ix, iy, iz) in itertools.product(range(4), repeat=3):
+                if (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2:
 
-                m_xform = translate((ix, iy, iz)) @ scale(0.3)
+                    m_xform = translate((ix, iy, iz)) @ scale(0.3)
 
-                current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
-                current_sphere_triangle_normals = apply_transform_to_normals(m_xform, sphere_triangle_normals)
+                    current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
+                    current_sphere_triangle_normals = apply_transform_to_normals(m_xform, sphere_triangle_normals)
 
-                vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
-                vbo_data["a_vertex"] = current_sphere_triangle_vertices
-                vbo_data["a_normal"] = current_sphere_triangle_normals
-                vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_sphere_triangle_vertices) // 3, 3)), 3, axis=0)
+                    vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
+                    vbo_data["a_vertex"] = current_sphere_triangle_vertices
+                    vbo_data["a_normal"] = current_sphere_triangle_normals
+                    vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_sphere_triangle_vertices) // 3, 3)), 3, axis=0)
 
-                vbo_data_list.append(vbo_data)
+                    vbo_data_list.append(vbo_data)
 
-                for (dx, dy, dz) in itertools.product((-1, 1), repeat=3):
+                    for (dx, dy, dz) in itertools.product((-1, 1), repeat=3):
 
-                    jx = ix + dx
-                    jy = iy + dy
-                    jz = iz + dz
+                        jx = ix + dx
+                        jy = iy + dy
+                        jz = iz + dz
 
-                    if max(jx, jy, jz) > 3:
-                        continue
+                        if max(jx, jy, jz) > 3:
+                            continue
 
-                    if (jx - jy) % 2 == 0 and (jx - jz) % 2 == 0 and (jx + jy + jz) % 4 < 2:
+                        if (jx - jy) % 2 == 0 and (jx - jz) % 2 == 0 and (jx + jy + jz) % 4 < 2:
 
-                        p1 = np.array((ix, iy, iz))
-                        p2 = np.array((jx, jy, jz))
+                            p1 = np.array((ix, iy, iz))
+                            p2 = np.array((jx, jy, jz))
 
-                        (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.08, 36)
+                            (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.08, 36)
 
-                        vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
-                        vbo_data["a_vertex"] = current_joint_triangles
-                        vbo_data["a_normal"] = current_joint_normals
-                        vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_joint_triangles) // 6, 3)), 6, axis=0)
+                            vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
+                            vbo_data["a_vertex"] = current_joint_triangles
+                            vbo_data["a_normal"] = current_joint_normals
+                            vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_joint_triangles) // 6, 3)), 6, axis=0)
 
-                        vbo_data_list.append(vbo_data)
+                            vbo_data_list.append(vbo_data)
 
         vbo_data = np.concatenate(vbo_data_list)
         vbo_data_list.clear()
@@ -177,17 +187,28 @@ class RenderableDiamond(Renderable):
 
     def render(self, m_projection, m_view, m_model):
 
-        cells_per_dimension = 10
+        cells_per_dimension = 2
 
-        glUseProgram(self._shader_program)
+        if True:
+            glUseProgram(self._shader_program)
 
-        glUniformMatrix4fv(self._m_projection_location, 1, GL_TRUE, m_projection.astype(np.float32))
-        glUniformMatrix4fv(self._m_view_location, 1, GL_TRUE, m_view.astype(np.float32))
-        glUniformMatrix4fv(self._m_model_location, 1, GL_TRUE, m_model.astype(np.float32))
+            glUniformMatrix4fv(self._m_projection_location, 1, GL_TRUE, m_projection.astype(np.float32))
+            glUniformMatrix4fv(self._m_view_location, 1, GL_TRUE, m_view.astype(np.float32))
+            glUniformMatrix4fv(self._m_model_location, 1, GL_TRUE, m_model.astype(np.float32))
+            glUniform1ui(self._cells_per_dimension_location, cells_per_dimension)
 
-        glUniform1ui(self._cells_per_dimension_location, cells_per_dimension)
+            glEnable(GL_CULL_FACE)
+            glBindVertexArray(self._vao)
+            glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, cells_per_dimension ** 3)
+            glDisable(GL_CULL_FACE)
 
-        glEnable(GL_CULL_FACE)
-        glBindVertexArray(self._vao)
-        glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, cells_per_dimension**3)
-        glDisable(GL_CULL_FACE)
+        if True:
+            glUseProgram(self._shader_program2)
+
+            glUniformMatrix4fv(self._m_projection_location2, 1, GL_TRUE, m_projection.astype(np.float32))
+            glUniformMatrix4fv(self._m_view_location2, 1, GL_TRUE, m_view.astype(np.float32))
+            glUniformMatrix4fv(self._m_model_location2, 1, GL_TRUE, m_model.astype(np.float32))
+            glUniform1ui(self._cells_per_dimension_location2, cells_per_dimension)
+
+            glBindVertexArray(self._vao)
+            glDrawArraysInstanced(GL_POINTS, 0, self._num_points, cells_per_dimension ** 3)

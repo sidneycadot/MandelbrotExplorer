@@ -109,7 +109,7 @@ class Application:
         #glCullFace(GL_BACK)
 
         fov_degrees = 30.0
-        near_plane =  0.5
+        near_plane = 0.5
         far_plane = 1000.0
 
         while not glfw.window_should_close(window):
@@ -124,7 +124,7 @@ class Application:
 
             # Make view matrix.
 
-            m_view = translate((0.0, 0.0, -100.0)) @ rotate((0, 1, 0), world.time() * 0.0)
+            m_view = translate((0.0, 0.0, -20.0)) @ rotate((0, 1, 0), world.time() * 0.0)
 
             # Make model matrix.
 
