@@ -60,20 +60,20 @@ def make_unit_sphere_triangles(recursion_level: int):
     r = np.sqrt((5 - q)/10)
     s = np.sqrt((5 + q)/10)
 
-    vertices = [
-        np.asarray((0, 0,  -1)),
-        np.asarray((0, 0,   1)),
-        np.asarray((-2/q, 0,  -1/q)),
-        np.asarray((+2/q, 0,   1/q)),
-        np.asarray(((5 + q)/10, -r, -1/q)),
-        np.asarray(((5 + q)/10,  r, -1/q)),
-        np.asarray(((-5 - q)/10, -r,  1/q)),
-        np.asarray(((-5 - q)/10,  r,  1/q)),
-        np.asarray(((-5 + q)/10, -s, -1/q)),
-        np.asarray(((-5 + q)/10,  s, -1/q)),
-        np.asarray(((5 - q)/10, -s,  1/q)),
-        np.asarray(((5 - q)/10,  s,  1/q))
-    ]
+    vertices = np.array([
+        (0, 0, -1),
+        (0, 0, 1),
+        (-2/q, 0, -1/q),
+        (+2/q, 0, +1/q),
+        ((+5 + q)/10, -r, -1/q),
+        ((+5 + q)/10, +r, -1/q),
+        ((-5 - q)/10, -r, +1/q),
+        ((-5 - q)/10, +r, +1/q),
+        ((-5 + q)/10, -s, -1/q),
+        ((-5 + q)/10, +s, -1/q),
+        ((+5 - q)/10, -s,  1/q),
+        ((+5 - q)/10, +s,  1/q)
+    ])
 
     face_definitions = [
         (1, 11, 7), (1, 7, 6), (1, 6, 10), (1, 10, 3),

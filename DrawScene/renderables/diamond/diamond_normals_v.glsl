@@ -11,11 +11,11 @@ uniform mat4 m_view;
 
 uniform uint cells_per_dimension;
 
+const float UNIT_CELL_SIZE = 4.0;
+
 out VS_OUT {
-    //vec3 normal;
     vec4 proj_normal_1;
     vec4 proj_normal_2;
-    //vec3 color;
 } vs_out;
 
 void main()
@@ -24,14 +24,14 @@ void main()
     uint ix = iz % cells_per_dimension; iz /= cells_per_dimension;
     uint iy = iz % cells_per_dimension; iz /= cells_per_dimension;
 
-    vec3 offset = 4 * (vec3(ix, iy, iz)  - 0.5 * cells_per_dimension);
+    vec3 offset = UNIT_CELL_SIZE * (vec3(ix, iy, iz) - 0.5 * cells_per_dimension);
 
-    mat4 mvp = m_projection * m_view * m_model;
+    mat4 mv  = m_view * m_model;
+    mat4 mvp = m_projection * mv;
 
-    gl_Position          = mvp * vec4(a_vertex + offset                 , 1.0);
+    gl_Position          = mvp * vec4(a_vertex + offset, 1.0);
     vs_out.proj_normal_1 = mvp * vec4(a_vertex + offset + 0.0 * a_normal, 1.0);
-    vs_out.proj_normal_2 = mvp * vec4(a_vertex + offset + 0.1 * a_normal, 1.0);
-    //vs_out.proj_normal_2 = (mvp * vec4(a_vertex + offset + 0.2 * a_normal, 1.0)).xyz;
+    vs_out.proj_normal_2 = mvp * vec4(a_vertex + offset + 0.2 * a_normal, 1.0);
 
     //vs_out.normal = normalize((transpose(inverse(m_view * m_model)) * vec4(a_normal, 0.0)).xyz);
     //vs_out.color = a_color;

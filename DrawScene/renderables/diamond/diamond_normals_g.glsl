@@ -3,6 +3,10 @@
 layout (points) in;
 layout (line_strip, max_vertices = 2) out;
 
+uniform mat4 m_projection;
+uniform mat4 m_model;
+uniform mat4 m_view;
+
 in VS_OUT {
     //vec3 normal;
     vec4 proj_normal_1;

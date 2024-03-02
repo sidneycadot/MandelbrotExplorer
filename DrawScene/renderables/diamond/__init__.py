@@ -202,7 +202,7 @@ class RenderableDiamond(Renderable):
             glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, cells_per_dimension ** 3)
             glDisable(GL_CULL_FACE)
 
-        if True:
+        if False:
             glUseProgram(self._shader_program2)
 
             glUniformMatrix4fv(self._m_projection_location2, 1, GL_TRUE, m_projection.astype(np.float32))

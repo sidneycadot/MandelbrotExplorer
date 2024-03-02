@@ -120,11 +120,10 @@ def apply_transform_to_vertices(m_xform: np.ndarray, vertices: np.ndarray) -> np
 
     n = len(vertices)
 
-    all_ones_column = np.ones((n, 1), dtype=vertices.dtype)
-
-    vertices = np.hstack((vertices, all_ones_column))
+    # Append constant '1' column.
+    vertices = np.pad(vertices, pad_width=((0, 0), (0, 1)), constant_values=1.0)
     vertices = (m_xform @ vertices.T).T
-    vertices = vertices[:, :-1]
+    vertices = np.delete(vertices, -1, 1)
 
     return vertices
 
@@ -141,11 +140,11 @@ def apply_transform_to_normals(m_xform: np.ndarray, normals: np.ndarray) -> np.n
 
     n = len(normals)
 
-    all_zeros_column = np.zeros((n, 1), dtype=normals.dtype)
+    # Append constant '0' column.
+    normals = np.pad(normals, pad_width=((0, 0), (0, 1)), constant_values=0.0)
 
-    normals = np.hstack((normals, all_zeros_column))
     normals = (np.linalg.inv(m_xform).T @ normals.T).T
-    normals = normals[:, :-1]
+    normals = np.delete(normals, -1, 1)
 
     # Normalize normals to unit length.
     normals /= np.linalg.norm(normals, axis=1, keepdims=True)
