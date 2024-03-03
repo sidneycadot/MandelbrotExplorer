@@ -27,7 +27,7 @@ const float UNIT_CELL_SIZE = 4.0;
 
 bool valid_lattice_position(vec3 pos)
 {
-    return length(pos) <= 8.0;
+    return length(pos) <= 8.5;
 }
 
 void main()
@@ -74,7 +74,7 @@ void main()
 
         if (a_lattice_delta.x == 0)
         {
-            // Carbon sphere.
+            // Carbon planet.
             vs_out.color = 0.2 + 0.8 * a_lattice_position / 3;
         }
         else

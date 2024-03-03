@@ -31,7 +31,7 @@ def _make_unit_sphere_triangles_recursive(triangle, recursion_level: int) -> lis
 
 
 def make_unit_sphere_triangles_tetrahedron(recursion_level: int):
-    """Make unit sphere by subdividing a tetrahedron."""
+    """Make unit planet by subdividing a tetrahedron."""
 
     v1 = normalize((-1.0, -1.0, -1.0))
     v2 = normalize((+1.0, +1.0, -1.0))
@@ -54,7 +54,7 @@ def make_unit_sphere_triangles_tetrahedron(recursion_level: int):
 
 
 def make_unit_sphere_triangles(recursion_level: int):
-    """Make unit sphere by subdividing a dodecahedron."""
+    """Make unit planet by subdividing a dodecahedron."""
 
     q = np.sqrt(5)
     r = np.sqrt((5 - q)/10)

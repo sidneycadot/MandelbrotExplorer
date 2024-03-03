@@ -8,7 +8,7 @@ from OpenGL.GL import *
 from matrices import translate, rotate, scale, perspective_projection
 
 from renderables import (
-    RenderableSphere, RenderableFloor, RenderableScene, RenderableModelTransformer, RenderableDiamond)
+    RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer, RenderableDiamond)
 
 from world import World
 
@@ -70,7 +70,7 @@ class Application:
 
             # add center earth with smaller earths around it.
 
-            earth = RenderableSphere()
+            earth = RenderablePlanet()
 
             scene.add_model(
                 RenderableModelTransformer(

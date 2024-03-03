@@ -59,7 +59,7 @@ class RenderableDiamond(Renderable):
             ("a_vertex", np.float32, 3),          # Triangle vertex
             ("a_normal", np.float32, 3),          # Triangle normal
             ("a_lattice_position", np.int32, 3),  # Lattice position
-            ("a_lattice_delta", np.int32, 3)      # Lattice delta (zero vector for sphere, nonzero vector for cylinder)
+            ("a_lattice_delta", np.int32, 3)      # Lattice delta (zero vector for planet, nonzero vector for cylinder)
         ])
 
         sphere_triangles = make_unit_sphere_triangles(recursion_level=2)
@@ -70,7 +70,7 @@ class RenderableDiamond(Renderable):
 
         add_red_center_spheres = False
         if add_red_center_spheres:
-            # Add central red sphere.
+            # Add central red planet.
 
             m_xform = translate((2, 2, 2)) @ scale(1.3)
             current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
@@ -190,7 +190,7 @@ class RenderableDiamond(Renderable):
 
     def render(self, m_projection, m_view, m_model):
 
-        cells_per_dimension = 4
+        cells_per_dimension = 6
 
         if True:
 

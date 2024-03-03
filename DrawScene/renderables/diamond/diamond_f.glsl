@@ -22,7 +22,7 @@ void main()
 {
     vec3 k_material = fs_in.color;
 
-    // NOTE: All vectors are in the "MV" coordinate system.
+    // NOTE: We do our geometric calculations in the "MV" coordinate system.
 
     vec3 mv_eye = vec3(0, 0, 0);
     vec3 mv_surface = fs_in.mv_surface;
