@@ -95,7 +95,7 @@ class Application:
             scene.add_model(
                 RenderableModelTransformer(
                     RenderableDiamond(),
-                    lambda: translate((0, 0.0, 0)) @ rotate((1, 0, 0), 0.02 * world.time()) @ rotate((0, 0, 1), 0.03 * world.time()) @ rotate((0, 1, 0), 0.01 * world.time())
+                    lambda: translate((0, 0.0, 0)) @ rotate((1, 0, 0), 0.2 * world.time()) @ rotate((0, 0, 1), 0.3 * world.time()) @ rotate((0, 1, 0), 0.1 * world.time())
                 )
             )
 
@@ -115,7 +115,7 @@ class Application:
 
         fov_degrees = 30.0
         near_plane = 0.5
-        far_plane = 100.0
+        far_plane = 1000.0
 
         while not glfw.window_should_close(window):
 
@@ -129,7 +129,7 @@ class Application:
 
             # Make view matrix.
 
-            m_view = translate((0.0, 0, -40.0)) @ rotate((0, 1, 0), world.time() * 0.0)
+            m_view = translate((0.0, 0, -60.0)) @ rotate((0, 1, 0), world.time() * 0.0)
 
             # Make model matrix.
 

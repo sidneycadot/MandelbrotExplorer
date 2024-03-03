@@ -62,13 +62,13 @@ class RenderableDiamond(Renderable):
         self._cells_per_dimension_location2 = glGetUniformLocation(self._shader_program, "cells_per_dimension")
 
         vbo_dtype = np.dtype([
-            ("a_vertex" , np.float32, 3),
-            ("a_normal" , np.float32, 3),
-            ("a_color"  , np.float32, 3)
+            ("a_vertex", np.float32, 3),          # Triangle vertex
+            ("a_normal", np.float32, 3),          # Triangle normal
+            ("a_lattice_position", np.int32, 3),  # Lattice position
+            ("a_lattice_delta", np.int32, 3)      # Lattice delta (zero vector for sphere, nonzero vector for cylinder)
         ])
 
-        sphere_triangles = make_unit_sphere_triangles(recursion_level=4)
-        #sphere_triangles = make_unit_sphere_triangles_tetrahedron(recursion_level=3)
+        sphere_triangles = make_unit_sphere_triangles(recursion_level=3)
         sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
         sphere_triangle_normals = np.array(sphere_triangles).reshape(-1, 3)
 
@@ -76,7 +76,7 @@ class RenderableDiamond(Renderable):
 
         add_red_center_spheres = False
         if add_red_center_spheres:
-            # add central red sphere
+            # Add central red sphere.
 
             m_xform = translate((2, 2, 2)) @ scale(1.3)
             current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
@@ -85,7 +85,8 @@ class RenderableDiamond(Renderable):
             vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
             vbo_data["a_vertex"] = current_sphere_triangle_vertices
             vbo_data["a_normal"] = current_sphere_triangle_normals
-            vbo_data["a_color"] = np.repeat(((1, 0, 0), ), len(current_sphere_triangle_vertices), axis=0)
+            vbo_data["a_lattice_position"] = (2, 2, 2)
+            vbo_data["a_lattice_delta"] = (0, 0, 0)
             vbo_data_list.append(vbo_data)
 
         add_diamond_geometry = True
@@ -101,7 +102,8 @@ class RenderableDiamond(Renderable):
                     vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
                     vbo_data["a_vertex"] = current_sphere_triangle_vertices
                     vbo_data["a_normal"] = current_sphere_triangle_normals
-                    vbo_data["a_color"] = np.repeat(((1, 1, 0.8), ), len(current_sphere_triangle_vertices), axis=0)
+                    vbo_data["a_lattice_position"] = (ix, iy, iz)
+                    vbo_data["a_lattice_delta"] = (0, 0, 0)
 
                     vbo_data_list.append(vbo_data)
 
@@ -119,20 +121,23 @@ class RenderableDiamond(Renderable):
                             p1 = np.array((ix, iy, iz))
                             p2 = np.array((jx, jy, jz))
 
-                            (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.06, 36)
+                            (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.06, 20)
 
                             vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
                             vbo_data["a_vertex"] = current_joint_triangles
                             vbo_data["a_normal"] = current_joint_normals
-                            vbo_data["a_color"] = np.repeat(((0.8, 0.9, 1.0), ), len(current_joint_triangles), axis=0)
+                            vbo_data["a_lattice_position"] = (ix, iy, iz)
+                            vbo_data["a_lattice_delta"] = (dx, dy, dz)
 
                             vbo_data_list.append(vbo_data)
 
         vbo_data = np.concatenate(vbo_data_list)
         vbo_data_list.clear()
 
+        print(vbo_data)
+
         self._num_points = len(vbo_data)
-        print("diamond vertices:", self._num_points)
+        print("Unit cell vertices: {}.".format(self._num_points))
 
         # Make Vertex Buffer Object (VBO)
         self._vbo = glGenBuffers(1)
@@ -140,24 +145,30 @@ class RenderableDiamond(Renderable):
         glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
         glBufferData(GL_ARRAY_BUFFER, vbo_data.nbytes, vbo_data, GL_STATIC_DRAW)
 
+        print("Buffer object size: {} bytes.".format(vbo_data.nbytes))
+
         # Create a vertex array object (VAO)
         # If a GL_ARRAY_BUFFER is bound, it will be associated with the VAO.
 
         self._vao = glGenVertexArrays(1)
         glBindVertexArray(self._vao)
 
-        # Defines the attribute with index 0 in the current VAO.
+        # Defines the attributes in the current VAO.
 
         attribute_index = 0  # 3D vertex coordinates
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
+        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 48, ctypes.c_void_p(0))
         glEnableVertexAttribArray(attribute_index)
 
         attribute_index = 1  # 3D normals
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 48, ctypes.c_void_p(12))
         glEnableVertexAttribArray(attribute_index)
 
-        attribute_index = 2  # 3D colors
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
+        attribute_index = 2  # 3D lattice position
+        glVertexAttribIPointer(attribute_index, 3, GL_INT, 48, ctypes.c_void_p(24))
+        glEnableVertexAttribArray(attribute_index)
+
+        attribute_index = 3  # 3D lattice delta
+        glVertexAttribIPointer(attribute_index, 3, GL_INT, 48, ctypes.c_void_p(36))
         glEnableVertexAttribArray(attribute_index)
 
         # Unbind VAO
@@ -187,7 +198,7 @@ class RenderableDiamond(Renderable):
 
     def render(self, m_projection, m_view, m_model):
 
-        cells_per_dimension = 4
+        cells_per_dimension = 9
 
         if True:
             m_transpose_inverse_view = np.linalg.inv(m_view).T

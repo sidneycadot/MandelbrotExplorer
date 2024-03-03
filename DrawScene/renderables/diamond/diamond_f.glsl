@@ -11,7 +11,9 @@ layout(location = 0) out vec4 fragment_color;
 in VS_OUT {
     vec3 mv_surface;
     vec3 mv_normal;
-    vec3 a_color;
+    flat ivec3 a_lattice_position;
+    flat ivec3 a_lattice_delta;
+    vec3 color;
 } fs_in;
 
 // Project vector a onto vector b.
@@ -34,9 +36,7 @@ const float alpha = 100.0;
 
 void main()
 {
-    vec3 ka = fs_in.a_color;
-    vec3 kd = fs_in.a_color;
-    vec3 ks = fs_in.a_color;
+    vec3 k_material = fs_in.color;
 
     // NOTE: We make all our vectors in the "MV" coordinate system.
 
@@ -52,7 +52,7 @@ void main()
     float contrib_d = max(0, dot(mv_lightsource_direction, mv_surface_normal));
     float contrib_s = max(0, pow(dot(mv_lightsource_reflection_direction, mv_viewer_direction), alpha));
 
-    vec3 intensity = (ka * ia) + (kd * id) * contrib_d + (ks * is) * contrib_s;
+    vec3 intensity = k_material * (ia + id * contrib_d + is * contrib_s);
 
     fragment_color = vec4(intensity, 1.0);
 
