@@ -68,7 +68,7 @@ class RenderableDiamond(Renderable):
             ("a_lattice_delta", np.int32, 3)      # Lattice delta (zero vector for sphere, nonzero vector for cylinder)
         ])
 
-        sphere_triangles = make_unit_sphere_triangles(recursion_level=3)
+        sphere_triangles = make_unit_sphere_triangles(recursion_level=2)
         sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
         sphere_triangle_normals = np.array(sphere_triangles).reshape(-1, 3)
 
@@ -198,7 +198,7 @@ class RenderableDiamond(Renderable):
 
     def render(self, m_projection, m_view, m_model):
 
-        cells_per_dimension = 9
+        cells_per_dimension = 4
 
         if True:
             m_transpose_inverse_view = np.linalg.inv(m_view).T

@@ -32,7 +32,7 @@ const vec3 ia = vec3(0.2, 0.2, 0.2);
 const vec3 id = vec3(1.0, 1.0, 1.0);
 const vec3 is = vec3(1.0, 1.0, 1.0);
 
-const float alpha = 100.0;
+const float alpha = 10.0;
 
 void main()
 {
@@ -49,8 +49,8 @@ void main()
     vec3 mv_lightsource_reflection_direction = 2 * dot(mv_lightsource_direction, mv_surface_normal) * mv_surface_normal - mv_lightsource_direction;
     vec3 mv_viewer_direction = normalize(mv_eye - mv_surface);
 
-    float contrib_d = max(0, dot(mv_lightsource_direction, mv_surface_normal));
-    float contrib_s = max(0, pow(dot(mv_lightsource_reflection_direction, mv_viewer_direction), alpha));
+    float contrib_d = max(0.0, dot(mv_lightsource_direction, mv_surface_normal));
+    float contrib_s = pow(max(0.0, dot(mv_lightsource_reflection_direction, mv_viewer_direction)), alpha);
 
     vec3 intensity = k_material * (ia + id * contrib_d + is * contrib_s);
 

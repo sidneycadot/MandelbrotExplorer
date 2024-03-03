@@ -29,7 +29,7 @@ const float UNIT_CELL_SIZE = 4.0;
 
 bool valid_lattice_position(vec3 pos)
 {
-    return length(pos) <= 15.0;
+    return length(pos) <= 8.0;
 }
 
 void main()

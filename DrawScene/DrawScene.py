@@ -129,7 +129,7 @@ class Application:
 
             # Make view matrix.
 
-            m_view = translate((0.0, 0, -60.0)) @ rotate((0, 1, 0), world.time() * 0.0)
+            m_view = translate((0.0, 0, -35.0)) @ rotate((0, 1, 0), world.time() * 0.0)
 
             # Make model matrix.
 
