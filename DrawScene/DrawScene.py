@@ -56,9 +56,14 @@ class Application:
         # Create the scene model.
         scene = RenderableScene()
 
-        draw_floor = True
+        draw_floor = False
         if draw_floor:
-            scene.add_model(RenderableFloor(8.0, 8.0))
+            scene.add_model(
+                RenderableModelTransformer(
+                    RenderableFloor(8.0, 8.0),
+                    lambda: translate((0, 0, 0))
+                )
+            )
 
         draw_earth = False
         if draw_earth:
@@ -90,7 +95,7 @@ class Application:
             scene.add_model(
                 RenderableModelTransformer(
                     RenderableDiamond(),
-                    lambda: translate((0, 0.0, 0)) @ rotate((1, 0, 0), 0.2 * world.time()) @ rotate((0, 0, 1), 0.3 * world.time()) @ rotate((0, 1, 0), 0.1 * world.time())
+                    lambda: translate((0, 0.0, 0)) @ rotate((1, 0, 0), 0.02 * world.time()) @ rotate((0, 0, 1), 0.03 * world.time()) @ rotate((0, 1, 0), 0.01 * world.time())
                 )
             )
 
@@ -105,12 +110,12 @@ class Application:
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
 
-        #glEnable(GL_CULL_FACE)
-        #glCullFace(GL_BACK)
+        glEnable(GL_CULL_FACE)
+        glCullFace(GL_BACK)
 
         fov_degrees = 30.0
         near_plane = 0.5
-        far_plane = 1000.0
+        far_plane = 100.0
 
         while not glfw.window_should_close(window):
 
@@ -124,7 +129,7 @@ class Application:
 
             # Make view matrix.
 
-            m_view = translate((0.0, 0.0, -20.0)) @ rotate((0, 1, 0), world.time() * 0.0)
+            m_view = translate((0.0, 0, -40.0)) @ rotate((0, 1, 0), world.time() * 0.0)
 
             # Make model matrix.
 
@@ -133,6 +138,10 @@ class Application:
             # Make perspective projection matrix.
 
             (framebuffer_width, framebuffer_height) = glfw.get_framebuffer_size(window)
+
+            if framebuffer_width * framebuffer_height == 0:
+                continue
+
             m_projection = perspective_projection(framebuffer_width, framebuffer_height, fov_degrees, near_plane, far_plane)
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

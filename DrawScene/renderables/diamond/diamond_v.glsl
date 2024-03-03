@@ -13,6 +13,7 @@ uniform uint cells_per_dimension;
 out VS_OUT {
     vec3 mv_surface;
     vec3 mv_normal;
+    vec3 a_color;
 } vs_out;
 
 vec3 vec4_to_vec3(vec4 v)
@@ -37,4 +38,5 @@ void main()
 
     vs_out.mv_surface = vec4_to_vec3(mv * vec4(a_vertex + offset, 1.0));
     vs_out.mv_normal = normalize((transpose(inverse(mv)) * vec4(a_normal, 0.0)).xyz);
+    vs_out.a_color = a_color;
 }

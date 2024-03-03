@@ -78,5 +78,7 @@ class RenderableFloor(Renderable):
         mvp = m_projection @ m_view @ m_model
         glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, mvp.astype(np.float32))
 
+        glDisable(GL_CULL_FACE)
+
         glBindVertexArray(self._vao)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)

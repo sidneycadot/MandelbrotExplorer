@@ -9,8 +9,7 @@ from OpenGL.GL import *
 from matrices import translate, apply_transform_to_vertices, scale, rotate, apply_transform_to_normals
 from renderables.renderable import Renderable
 from renderables.opengl_utilities import create_opengl_program
-from renderables.geometry import make_unit_sphere_triangles, make_cylinder_triangles, normalize, \
-    make_unit_sphere_triangles_tetrahedron
+from renderables.geometry import make_unit_sphere_triangles, make_cylinder_triangles, normalize
 
 
 def make_joint_triangles(p1, p2, diameter, subdivision_count):
@@ -51,6 +50,7 @@ class RenderableDiamond(Renderable):
         self._m_projection_location = glGetUniformLocation(self._shader_program, "m_projection")
         self._m_view_location = glGetUniformLocation(self._shader_program, "m_view")
         self._m_model_location = glGetUniformLocation(self._shader_program, "m_model")
+        self._m_transpose_inverse_view_location = glGetUniformLocation(self._shader_program, "m_transpose_inverse_view")
         self._cells_per_dimension_location = glGetUniformLocation(self._shader_program, "cells_per_dimension")
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "diamond_normals")
@@ -67,7 +67,7 @@ class RenderableDiamond(Renderable):
             ("a_color"  , np.float32, 3)
         ])
 
-        sphere_triangles = make_unit_sphere_triangles(recursion_level=3)
+        sphere_triangles = make_unit_sphere_triangles(recursion_level=4)
         #sphere_triangles = make_unit_sphere_triangles_tetrahedron(recursion_level=3)
         sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
         sphere_triangle_normals = np.array(sphere_triangles).reshape(-1, 3)
@@ -78,7 +78,7 @@ class RenderableDiamond(Renderable):
         if add_red_center_spheres:
             # add central red sphere
 
-            m_xform = translate((2, 2, 2)) @ scale(1.25)
+            m_xform = translate((2, 2, 2)) @ scale(1.3)
             current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform, sphere_triangle_vertices)
             current_sphere_triangle_normals = apply_transform_to_normals(m_xform, sphere_triangle_normals)
 
@@ -101,7 +101,7 @@ class RenderableDiamond(Renderable):
                     vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
                     vbo_data["a_vertex"] = current_sphere_triangle_vertices
                     vbo_data["a_normal"] = current_sphere_triangle_normals
-                    vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_sphere_triangle_vertices) // 3, 3)), 3, axis=0)
+                    vbo_data["a_color"] = np.repeat(((1, 1, 0.8), ), len(current_sphere_triangle_vertices), axis=0)
 
                     vbo_data_list.append(vbo_data)
 
@@ -119,12 +119,12 @@ class RenderableDiamond(Renderable):
                             p1 = np.array((ix, iy, iz))
                             p2 = np.array((jx, jy, jz))
 
-                            (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.08, 36)
+                            (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.06, 36)
 
                             vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
                             vbo_data["a_vertex"] = current_joint_triangles
                             vbo_data["a_normal"] = current_joint_normals
-                            vbo_data["a_color"] = np.repeat(np.random.uniform(0.0, 1.0, size=(len(current_joint_triangles) // 6, 3)), 6, axis=0)
+                            vbo_data["a_color"] = np.repeat(((0.8, 0.9, 1.0), ), len(current_joint_triangles), axis=0)
 
                             vbo_data_list.append(vbo_data)
 
@@ -187,14 +187,17 @@ class RenderableDiamond(Renderable):
 
     def render(self, m_projection, m_view, m_model):
 
-        cells_per_dimension = 2
+        cells_per_dimension = 4
 
         if True:
+            m_transpose_inverse_view = np.linalg.inv(m_view).T
+
             glUseProgram(self._shader_program)
 
             glUniformMatrix4fv(self._m_projection_location, 1, GL_TRUE, m_projection.astype(np.float32))
             glUniformMatrix4fv(self._m_view_location, 1, GL_TRUE, m_view.astype(np.float32))
             glUniformMatrix4fv(self._m_model_location, 1, GL_TRUE, m_model.astype(np.float32))
+            glUniformMatrix4fv(self._m_transpose_inverse_view_location, 1, GL_TRUE, m_transpose_inverse_view.astype(np.float32))
             glUniform1ui(self._cells_per_dimension_location, cells_per_dimension)
 
             glEnable(GL_CULL_FACE)
