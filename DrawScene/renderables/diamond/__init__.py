@@ -3,7 +3,6 @@ import os
 
 import numpy as np
 
-
 from OpenGL.GL import *
 
 from matrices import translate, apply_transform_to_vertices, scale, rotate, apply_transform_to_normals
@@ -50,16 +49,11 @@ class RenderableDiamond(Renderable):
         self._m_projection_location = glGetUniformLocation(self._shader_program, "m_projection")
         self._m_view_location = glGetUniformLocation(self._shader_program, "m_view")
         self._m_model_location = glGetUniformLocation(self._shader_program, "m_model")
-        self._m_transpose_inverse_view_location = glGetUniformLocation(self._shader_program, "m_transpose_inverse_view")
+        self._transposed_inverse_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_matrix")
+        self._model_view_projection_matrix_location = glGetUniformLocation(self._shader_program, "model_view_projection_matrix")
+        self._model_view_matrix_location = glGetUniformLocation(self._shader_program, "model_view_matrix")
+        self._transposed_inverse_model_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_model_view_matrix")
         self._cells_per_dimension_location = glGetUniformLocation(self._shader_program, "cells_per_dimension")
-
-        shader_source_path = os.path.join(os.path.dirname(__file__), "diamond_normals")
-        (self._shaders2, self._shader_program2) = create_opengl_program(shader_source_path)
-
-        self._m_projection_location2 = glGetUniformLocation(self._shader_program2, "m_projection")
-        self._m_view_location2 = glGetUniformLocation(self._shader_program2, "m_view")
-        self._m_model_location2 = glGetUniformLocation(self._shader_program2, "m_model")
-        self._cells_per_dimension_location2 = glGetUniformLocation(self._shader_program, "cells_per_dimension")
 
         vbo_dtype = np.dtype([
             ("a_vertex", np.float32, 3),          # Triangle vertex
@@ -134,8 +128,6 @@ class RenderableDiamond(Renderable):
         vbo_data = np.concatenate(vbo_data_list)
         vbo_data_list.clear()
 
-        print(vbo_data)
-
         self._num_points = len(vbo_data)
         print("Unit cell vertices: {}.".format(self._num_points))
 
@@ -201,28 +193,16 @@ class RenderableDiamond(Renderable):
         cells_per_dimension = 4
 
         if True:
-            m_transpose_inverse_view = np.linalg.inv(m_view).T
 
             glUseProgram(self._shader_program)
 
-            glUniformMatrix4fv(self._m_projection_location, 1, GL_TRUE, m_projection.astype(np.float32))
-            glUniformMatrix4fv(self._m_view_location, 1, GL_TRUE, m_view.astype(np.float32))
-            glUniformMatrix4fv(self._m_model_location, 1, GL_TRUE, m_model.astype(np.float32))
-            glUniformMatrix4fv(self._m_transpose_inverse_view_location, 1, GL_TRUE, m_transpose_inverse_view.astype(np.float32))
+            glUniformMatrix4fv(self._transposed_inverse_view_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view).T.astype(np.float32))
+            glUniformMatrix4fv(self._model_view_projection_matrix_location, 1, GL_TRUE, (m_projection @ m_view @ m_model).astype(np.float32))
+            glUniformMatrix4fv(self._model_view_matrix_location, 1, GL_TRUE, (m_view @ m_model).astype(np.float32))
+            glUniformMatrix4fv(self._transposed_inverse_model_view_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view @ m_model).T.astype(np.float32))
             glUniform1ui(self._cells_per_dimension_location, cells_per_dimension)
 
             glEnable(GL_CULL_FACE)
             glBindVertexArray(self._vao)
             glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, cells_per_dimension ** 3)
             glDisable(GL_CULL_FACE)
-
-        if False:
-            glUseProgram(self._shader_program2)
-
-            glUniformMatrix4fv(self._m_projection_location2, 1, GL_TRUE, m_projection.astype(np.float32))
-            glUniformMatrix4fv(self._m_view_location2, 1, GL_TRUE, m_view.astype(np.float32))
-            glUniformMatrix4fv(self._m_model_location2, 1, GL_TRUE, m_model.astype(np.float32))
-            glUniform1ui(self._cells_per_dimension_location2, cells_per_dimension)
-
-            glBindVertexArray(self._vao)
-            glDrawArraysInstanced(GL_POINTS, 0, self._num_points, cells_per_dimension ** 3)

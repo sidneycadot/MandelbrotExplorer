@@ -6,17 +6,15 @@ layout (location = 1) in vec3 a_normal;
 layout (location = 2) in ivec3 a_lattice_position;
 layout (location = 3) in ivec3 a_lattice_delta;
 
-uniform mat4 m_projection;
-uniform mat4 m_model;
-uniform mat4 m_view;
+uniform mat4 model_view_projection_matrix;
+uniform mat4 model_view_matrix;
+uniform mat4 transposed_inverse_model_view_matrix;
 
 uniform uint cells_per_dimension;
 
 out VS_OUT {
     vec3 mv_surface;
     vec3 mv_normal;
-    flat ivec3 a_lattice_position;
-    flat ivec3 a_lattice_delta;
     vec3 color;
 } vs_out;
 
@@ -65,35 +63,24 @@ void main()
 
     if (!render_flag)
     {
-        mat4 mv  = m_view * m_model;
-        mat4 mvp = m_projection * mv;
-
+        // Emit a zero triangle, which will be discarded.
         gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
-        vs_out.mv_surface = vec3(0, 0, 0);
-        vs_out.mv_normal = vec3(0, 0, 0);
-
-
-        vs_out.color = vec3(1.0, 0.0, 0.0);
     }
     else
     {
-        mat4 mv  = m_view * m_model;
-        mat4 mvp = m_projection * mv;
+        gl_Position = model_view_projection_matrix * vec4(vertex_position, 1.0);
+        vs_out.mv_surface = vec4_to_vec3(model_view_matrix * vec4(vertex_position, 1.0));
+        vs_out.mv_normal = normalize((transposed_inverse_model_view_matrix * vec4(a_normal, 0.0)).xyz);
 
-        gl_Position = mvp * vec4(vertex_position, 1);
-        vs_out.mv_surface = vec4_to_vec3(mv * vec4(vertex_position, 1.0));
-        vs_out.mv_normal = normalize((transpose(inverse(mv)) * vec4(a_normal, 0.0)).xyz);
-
-        if (a_lattice_delta.x != 0)
+        if (a_lattice_delta.x == 0)
         {
-            vs_out.color = vec3(1.0, 1.0, 0.9);
+            // Carbon sphere.
+            vs_out.color = 0.2 + 0.8 * a_lattice_position / 3;
         }
         else
         {
-            vs_out.color = 0.2 + 0.8 * a_lattice_position / 3;
+            // Carbon-carbon joint cylinder.
+            vs_out.color = vec3(1.0, 1.0, 1.0);
         }
     }
-
-    vs_out.a_lattice_position = a_lattice_position;
-    vs_out.a_lattice_delta = a_lattice_delta;
 }
