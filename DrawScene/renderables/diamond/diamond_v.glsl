@@ -9,6 +9,7 @@ layout (location = 3) in ivec3 a_lattice_delta;
 uniform mat4 model_view_projection_matrix;
 uniform mat4 model_view_matrix;
 uniform mat4 transposed_inverse_model_view_matrix;
+uniform uint cut;
 
 uniform uint cells_per_dimension;
 
@@ -27,7 +28,15 @@ const float UNIT_CELL_SIZE = 4.0;
 
 bool valid_lattice_position(vec3 pos)
 {
-    return length(pos) <= 8.5;
+    bool ok = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 6.0;
+
+    switch (cut)
+    {
+        case 1: if (pos.x < 0) ok = false; break;
+        case 2: if (pos.x + pos.y < 0) ok = false; break;
+        case 3: if (pos.x + pos.y + pos.z < 0) ok = false; break;
+    }
+    return ok;
 }
 
 void main()

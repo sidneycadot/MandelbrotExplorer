@@ -15,6 +15,9 @@ from world import World
 
 class Application:
 
+    def __init__(self):
+        self.diamond_model = None
+
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int):
         """Create a window using GLFW."""
@@ -34,8 +37,7 @@ class Application:
 
         return window
 
-    @staticmethod
-    def run():
+    def run(self):
 
         """Main entry point."""
 
@@ -47,7 +49,7 @@ class Application:
         window = Application.create_glfw_window(4, 1)
 
         glfw.set_framebuffer_size_callback(window, lambda *args: Application.framebuffer_size_callback(*args))
-        glfw.set_key_callback(window, lambda *args: Application.key_callback(*args))
+        glfw.set_key_callback(window, lambda *args: self.key_callback(*args))
 
         glfw.make_context_current(window)
 
@@ -92,9 +94,11 @@ class Application:
 
         draw_diamond = True
         if draw_diamond:
+            self.diamond_model = RenderableDiamond()
+
             scene.add_model(
                 RenderableModelTransformer(
-                    RenderableDiamond(),
+                    self.diamond_model,
                     lambda: translate((0, 0.0, 0)) @ rotate((1, 0, 0), 0.2 * world.time()) @ rotate((0, 0, 1), 0.3 * world.time()) @ rotate((0, 1, 0), 0.1 * world.time())
                 )
             )
@@ -162,14 +166,24 @@ class Application:
         print("Resizing framebuffer:", width, height)
         glViewport(0, 0, width, height)
 
-    @staticmethod
-    def key_callback(window, key: int, scancode: int, action: int, mods: int):
+    def key_callback(self, window, key: int, scancode: int, action: int, mods: int):
 
         if action == glfw.PRESS:
             match key:
                 case glfw.KEY_ESCAPE:
                     glfw.set_window_should_close(window, True)
-
+                case glfw.KEY_0:
+                    if self.diamond_model is not None:
+                        self.diamond_model.cut = 0
+                case glfw.KEY_1:
+                    if self.diamond_model is not None:
+                        self.diamond_model.cut = 1 if self.diamond_model.cut != 1 else 0
+                case glfw.KEY_2:
+                    if self.diamond_model is not None:
+                        self.diamond_model.cut = 2 if self.diamond_model.cut != 2 else 0
+                case glfw.KEY_3:
+                    if self.diamond_model is not None:
+                        self.diamond_model.cut = 3 if self.diamond_model.cut != 3 else 0
 
 def main():
     app = Application()

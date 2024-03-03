@@ -43,17 +43,21 @@ class RenderableDiamond(Renderable):
 
     def __init__(self):
 
+        self.cut = 0
+
         shader_source_path = os.path.join(os.path.dirname(__file__), "diamond")
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
-        self._m_projection_location = glGetUniformLocation(self._shader_program, "m_projection")
-        self._m_view_location = glGetUniformLocation(self._shader_program, "m_view")
-        self._m_model_location = glGetUniformLocation(self._shader_program, "m_model")
+        #self._m_projection_location = glGetUniformLocation(self._shader_program, "m_projection")
+        #self._m_view_location = glGetUniformLocation(self._shader_program, "m_view")
+        #self._m_model_location = glGetUniformLocation(self._shader_program, "m_model")
         self._transposed_inverse_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_matrix")
         self._model_view_projection_matrix_location = glGetUniformLocation(self._shader_program, "model_view_projection_matrix")
         self._model_view_matrix_location = glGetUniformLocation(self._shader_program, "model_view_matrix")
         self._transposed_inverse_model_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_model_view_matrix")
+
         self._cells_per_dimension_location = glGetUniformLocation(self._shader_program, "cells_per_dimension")
+        self._cut_location = glGetUniformLocation(self._shader_program, "cut")
 
         vbo_dtype = np.dtype([
             ("a_vertex", np.float32, 3),          # Triangle vertex
@@ -201,6 +205,7 @@ class RenderableDiamond(Renderable):
             glUniformMatrix4fv(self._model_view_matrix_location, 1, GL_TRUE, (m_view @ m_model).astype(np.float32))
             glUniformMatrix4fv(self._transposed_inverse_model_view_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view @ m_model).T.astype(np.float32))
             glUniform1ui(self._cells_per_dimension_location, cells_per_dimension)
+            glUniform1ui(self._cut_location, self.cut)
 
             glEnable(GL_CULL_FACE)
             glBindVertexArray(self._vao)
