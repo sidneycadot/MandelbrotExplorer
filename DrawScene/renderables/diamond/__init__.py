@@ -44,19 +44,19 @@ class RenderableDiamond(Renderable):
     def __init__(self):
 
         self.cut = 0
+        self.unit_cells_per_dimension = 5
+        self.crystal_side_length = 14.0
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "diamond")
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
-        #self._m_projection_location = glGetUniformLocation(self._shader_program, "m_projection")
-        #self._m_view_location = glGetUniformLocation(self._shader_program, "m_view")
-        #self._m_model_location = glGetUniformLocation(self._shader_program, "m_model")
         self._transposed_inverse_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_matrix")
         self._model_view_projection_matrix_location = glGetUniformLocation(self._shader_program, "model_view_projection_matrix")
         self._model_view_matrix_location = glGetUniformLocation(self._shader_program, "model_view_matrix")
         self._transposed_inverse_model_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_model_view_matrix")
 
-        self._cells_per_dimension_location = glGetUniformLocation(self._shader_program, "cells_per_dimension")
+        self._unit_cells_per_dimension_location = glGetUniformLocation(self._shader_program, "unit_cells_per_dimension")
+        self._crystal_side_length_location = glGetUniformLocation(self._shader_program, "crystal_side_length")
         self._cut_location = glGetUniformLocation(self._shader_program, "cut")
 
         vbo_dtype = np.dtype([
@@ -194,8 +194,6 @@ class RenderableDiamond(Renderable):
 
     def render(self, m_projection, m_view, m_model):
 
-        cells_per_dimension = 6
-
         if True:
 
             glUseProgram(self._shader_program)
@@ -204,10 +202,12 @@ class RenderableDiamond(Renderable):
             glUniformMatrix4fv(self._model_view_projection_matrix_location, 1, GL_TRUE, (m_projection @ m_view @ m_model).astype(np.float32))
             glUniformMatrix4fv(self._model_view_matrix_location, 1, GL_TRUE, (m_view @ m_model).astype(np.float32))
             glUniformMatrix4fv(self._transposed_inverse_model_view_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view @ m_model).T.astype(np.float32))
-            glUniform1ui(self._cells_per_dimension_location, cells_per_dimension)
+
+            glUniform1ui(self._unit_cells_per_dimension_location, self.unit_cells_per_dimension)
+            glUniform1f(self._crystal_side_length_location, self.crystal_side_length)
             glUniform1ui(self._cut_location, self.cut)
 
             glEnable(GL_CULL_FACE)
             glBindVertexArray(self._vao)
-            glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, cells_per_dimension ** 3)
+            glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, self.unit_cells_per_dimension ** 3)
             glDisable(GL_CULL_FACE)

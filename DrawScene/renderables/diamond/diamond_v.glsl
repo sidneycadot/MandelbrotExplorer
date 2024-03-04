@@ -9,9 +9,10 @@ layout (location = 3) in ivec3 a_lattice_delta;
 uniform mat4 model_view_projection_matrix;
 uniform mat4 model_view_matrix;
 uniform mat4 transposed_inverse_model_view_matrix;
-uniform uint cut;
 
-uniform uint cells_per_dimension;
+uniform uint cut;
+uniform uint unit_cells_per_dimension;
+uniform float crystal_side_length;
 
 out VS_OUT {
     vec3 mv_surface;
@@ -28,7 +29,7 @@ const float UNIT_CELL_SIZE = 4.0;
 
 bool valid_lattice_position(vec3 pos)
 {
-    bool ok = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 6.0;
+    bool ok = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 0.5 * crystal_side_length;
 
     switch (cut)
     {
@@ -42,18 +43,18 @@ bool valid_lattice_position(vec3 pos)
 void main()
 {
     uint iz = gl_InstanceID;
-    uint ix = iz % cells_per_dimension; iz /= cells_per_dimension;
-    uint iy = iz % cells_per_dimension; iz /= cells_per_dimension;
+    uint ix = iz % unit_cells_per_dimension; iz /= unit_cells_per_dimension;
+    uint iy = iz % unit_cells_per_dimension; iz /= unit_cells_per_dimension;
 
-    uvec3 unitcell_index_vector = uvec3(ix, iy, iz);
+    uvec3 unit_cell_index_vector = uvec3(ix, iy, iz);
 
-    vec3 unitcell_displacement_vector = UNIT_CELL_SIZE * (unitcell_index_vector - 0.5 * cells_per_dimension);
+    vec3 unit_cell_displacement_vector = UNIT_CELL_SIZE * (unit_cell_index_vector - 0.5 * unit_cells_per_dimension);
 
     // Do we want to render this triangle?
 
-    vec3 lattice_position = unitcell_displacement_vector + a_lattice_position;
+    vec3 lattice_position = unit_cell_displacement_vector + a_lattice_position;
 
-    vec3 vertex_position = unitcell_displacement_vector + a_vertex;
+    vec3 vertex_position = unit_cell_displacement_vector + a_vertex;
 
     bool render_flag = true;
 
