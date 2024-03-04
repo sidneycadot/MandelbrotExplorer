@@ -186,7 +186,7 @@ class Application:
                 case glfw.KEY_RIGHT_BRACKET:
                     if self.diamond_model is not None:
                         if (mods & glfw.MOD_ALT) != 0:
-                            self.render_distance = self.render_distance + 5.0
+                            self.render_distance =  max(0.0, self.render_distance - 5.0)
                         elif (mods & glfw.MOD_SHIFT) != 0:
                             self.diamond_model.unit_cells_per_dimension = self.diamond_model.unit_cells_per_dimension + 2
                         else:
@@ -194,7 +194,7 @@ class Application:
                 case glfw.KEY_LEFT_BRACKET:
                         if self.diamond_model is not None:
                             if (mods & glfw.MOD_ALT) != 0:
-                                self.render_distance = max(0.0, self.render_distance - 5.0)
+                                self.render_distance = self.render_distance + 5.0
                             elif (mods & glfw.MOD_SHIFT) != 0:
                                 self.diamond_model.unit_cells_per_dimension = max(1, self.diamond_model.unit_cells_per_dimension - 2)
                             else:
