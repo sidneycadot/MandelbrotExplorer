@@ -1,10 +1,14 @@
+
+import glfw
+
+
 class World:
 
     def __init__(self):
-        self._time = 0.0
+        self._sample_time = glfw.get_time()
 
-    def set_time(self, time: float):
-        self._time = time
+    def sample_time(self):
+        self._sample_time = glfw.get_time()
 
     def time(self):
-        return self._time
+        return self._sample_time

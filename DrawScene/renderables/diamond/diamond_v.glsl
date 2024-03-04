@@ -85,7 +85,7 @@ void main()
         if (a_lattice_delta.x == 0)
         {
             // Carbon planet.
-            vs_out.color = 0.2 + 0.8 * a_lattice_position / 3;
+            vs_out.color = 0.2 + 0.9 * a_lattice_position / 3;
         }
         else
         {

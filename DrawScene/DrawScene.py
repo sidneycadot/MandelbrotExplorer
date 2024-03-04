@@ -123,13 +123,12 @@ class Application:
 
         while not glfw.window_should_close(window):
 
-            t_now = glfw.get_time()
+            t_now = world.sample_time()
+
             if t_prev is not None:
                 frame_duration = (t_now - t_prev)
                 #print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
             t_prev = t_now
-
-            world.set_time(t_now)
 
             # Make view matrix.
 
@@ -208,6 +207,7 @@ class Application:
                     self.diamond_model.unit_cells_per_dimension,
                     self.diamond_model.crystal_side_length
                 ))
+
 
 def main():
     app = Application()
