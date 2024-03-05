@@ -28,25 +28,34 @@ vec3 vec4_to_vec3(vec4 v)
 
 const float UNIT_CELL_SIZE = 4.0;
 
-int crystal_lattice_position_type(vec3 pos)
+const vec3 cut100_normal = normalize(vec3(1.0, 0.0, 0.0));
+const vec3 cut110_normal = normalize(vec3(1.0, 1.0, 0.0));
+const vec3 cut111_normal = normalize(vec3(1.0, 1.0, 1.0));
+
+const float positive_infinity = +1e30; // Certainly outside of crystal.
+const float negative_infinity = -1e30; // Certainly inside of crystal.
+
+const float cut_surface_bias = 0.1;
+
+float crystal_lattice_surface_cut_distance(vec3 pos)
 {
-    // Return +1 : outside crystal.
-    // Return  0 : inside crystal, on cut surface.
-    // Return -1 : inside crystal, below cut surface.
+    // Positive : outside crystal.
+    // Negative : inside crystal.
 
     bool candidate = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 0.5 * crystal_side_length;
     if (!candidate)
     {
-        return +1;
+        return positive_infinity; // Outside of crystal.
     }
 
     switch (cut)
     {
-        case 0: return -1;
-        case 1: return int(sign(pos.x));
-        case 2: return int(sign(pos.x + pos.y));
-        case 3: return int(sign(pos.x + pos.y + pos.z + 1));
+        case 1: return dot(cut100_normal, pos);
+        case 2: return dot(cut110_normal, pos);
+        case 3: return dot(cut111_normal, pos);
     }
+
+    return negative_infinity; // Inside of crystal.
 }
 
 void main()
@@ -65,17 +74,16 @@ void main()
 
     vec3 vertex_position = unit_cell_displacement_vector + a_vertex;
 
-    bool render_flag = true;
+    float carbon_cut_distance = crystal_lattice_surface_cut_distance(lattice_position);
 
-    int carbon_position_type = crystal_lattice_position_type(lattice_position);
-    if (carbon_position_type > 0)
+    bool render_flag = true;
+    if (carbon_cut_distance > cut_surface_bias)
     {
         render_flag = false;
     }
     else
     {
-        lattice_position += a_lattice_delta;
-        if (crystal_lattice_position_type(lattice_position) > 0)
+        if (crystal_lattice_surface_cut_distance(lattice_position + a_lattice_delta) > cut_surface_bias)
         {
             render_flag = false;
         }
@@ -113,13 +121,15 @@ void main()
                 if (a_lattice_delta.x == 0)
                 {
                     // Carbon atom (sphere).
-                    if (carbon_position_type < 0)
+                    if (carbon_cut_distance > -1.9)
                     {
-                        vs_out.color = vec3(1.0, 1.0, 1.0);
+                        // Near surface
+                        vs_out.color = vec3(1.0, 0.0, 0.0);
                     }
                     else
                     {
-                        vs_out.color = vec3(1.0, 0.0, 0.0);
+                        // Not near surface surface
+                        vs_out.color = vec3(1.0, 1.0, 1.0);
                     }
                 }
                 else

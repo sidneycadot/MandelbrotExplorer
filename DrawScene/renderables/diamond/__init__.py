@@ -46,7 +46,7 @@ class RenderableDiamond(Renderable):
         self.cut = 0
         self.unit_cells_per_dimension = 5
         self.crystal_side_length = 17.0
-        self.color_mode = 0
+        self.color_mode = 1
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "diamond")
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
