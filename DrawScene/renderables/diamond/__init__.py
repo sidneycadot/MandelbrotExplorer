@@ -43,7 +43,7 @@ class RenderableDiamond(Renderable):
 
     def __init__(self):
 
-        self.cut = 0
+        self.cut_mode = 0
         self.unit_cells_per_dimension = 5
         self.crystal_side_length = 17.0
         self.color_mode = 1
@@ -58,14 +58,14 @@ class RenderableDiamond(Renderable):
 
         self._unit_cells_per_dimension_location = glGetUniformLocation(self._shader_program, "unit_cells_per_dimension")
         self._crystal_side_length_location = glGetUniformLocation(self._shader_program, "crystal_side_length")
-        self._cut_location = glGetUniformLocation(self._shader_program, "cut")
+        self._cut_mode_location = glGetUniformLocation(self._shader_program, "cut_mode")
         self._color_mode_location = glGetUniformLocation(self._shader_program, "color_mode")
 
         vbo_dtype = np.dtype([
             ("a_vertex", np.float32, 3),          # Triangle vertex
             ("a_normal", np.float32, 3),          # Triangle normal
             ("a_lattice_position", np.int32, 3),  # Lattice position
-            ("a_lattice_delta", np.int32, 3)      # Lattice delta (zero vector for planet, nonzero vector for cylinder)
+            ("a_lattice_delta", np.int32, 3)      # Lattice delta (zero vector for sphere, nonzero vector for cylinder)
         ])
 
         sphere_triangles = make_unit_sphere_triangles(recursion_level=2)
@@ -121,7 +121,7 @@ class RenderableDiamond(Renderable):
                             p1 = np.array((ix, iy, iz))
                             p2 = np.array((jx, jy, jz))
 
-                            (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.06, 20)
+                            (current_joint_triangles, current_joint_normals) = make_joint_triangles(p1, p2, 0.10, 20)
 
                             vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
                             vbo_data["a_vertex"] = current_joint_triangles
@@ -208,7 +208,7 @@ class RenderableDiamond(Renderable):
             glUniform1ui(self._unit_cells_per_dimension_location, self.unit_cells_per_dimension)
             glUniform1ui(self._color_mode_location, self.color_mode)
             glUniform1f(self._crystal_side_length_location, self.crystal_side_length)
-            glUniform1ui(self._cut_location, self.cut)
+            glUniform1ui(self._cut_mode_location, self.cut_mode)
 
             glEnable(GL_CULL_FACE)
             glBindVertexArray(self._vao)

@@ -173,16 +173,16 @@ class Application:
                     glfw.set_window_should_close(window, True)
                 case glfw.KEY_0:
                     if self.diamond_model is not None:
-                        self.diamond_model.cut = 0
+                        self.diamond_model.cut_mode = 0
                 case glfw.KEY_1:
                     if self.diamond_model is not None:
-                        self.diamond_model.cut = 1 if self.diamond_model.cut != 1 else 0
+                        self.diamond_model.cut_mode = 1 if self.diamond_model.cut_mode != 1 else 0
                 case glfw.KEY_2:
                     if self.diamond_model is not None:
-                        self.diamond_model.cut = 2 if self.diamond_model.cut != 2 else 0
+                        self.diamond_model.cut_mode = 2 if self.diamond_model.cut_mode != 2 else 0
                 case glfw.KEY_3:
                     if self.diamond_model is not None:
-                        self.diamond_model.cut = 3 if self.diamond_model.cut != 3 else 0
+                        self.diamond_model.cut_mode = 3 if self.diamond_model.cut_mode != 3 else 0
                 case glfw.KEY_C:
                     if self.diamond_model is not None:
                         self.diamond_model.color_mode = (self.diamond_model.color_mode + 1) % 2
@@ -206,7 +206,7 @@ class Application:
             if self.diamond_model is not None:
                 print("render distance {} diamond cut: {} diamond unit_cells_per_dimension: {} diamond crystal_side_length: {}".format(
                     self.render_distance,
-                    self.diamond_model.cut,
+                    self.diamond_model.cut_mode,
                     self.diamond_model.unit_cells_per_dimension,
                     self.diamond_model.crystal_side_length
                 ))

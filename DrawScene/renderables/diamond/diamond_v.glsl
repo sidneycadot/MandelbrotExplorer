@@ -10,7 +10,7 @@ uniform mat4 model_view_projection_matrix;
 uniform mat4 model_view_matrix;
 uniform mat4 transposed_inverse_model_view_matrix;
 
-uniform uint cut;
+uniform uint cut_mode;
 uniform uint unit_cells_per_dimension;
 uniform float crystal_side_length;
 uniform uint color_mode;
@@ -35,7 +35,7 @@ const vec3 cut111_normal = normalize(vec3(1.0, 1.0, 1.0));
 const float positive_infinity = +1e30; // Certainly outside of crystal.
 const float negative_infinity = -1e30; // Certainly inside of crystal.
 
-const float cut_surface_bias = 0.1;
+const float cut_surface_threshold = 1e-3;
 
 float crystal_lattice_surface_cut_distance(vec3 pos)
 {
@@ -48,7 +48,7 @@ float crystal_lattice_surface_cut_distance(vec3 pos)
         return positive_infinity; // Outside of crystal.
     }
 
-    switch (cut)
+    switch (cut_mode)
     {
         case 1: return dot(cut100_normal, pos);
         case 2: return dot(cut110_normal, pos);
@@ -77,13 +77,13 @@ void main()
     float carbon_cut_distance = crystal_lattice_surface_cut_distance(lattice_position);
 
     bool render_flag = true;
-    if (carbon_cut_distance > cut_surface_bias)
+    if (carbon_cut_distance > cut_surface_threshold)
     {
         render_flag = false;
     }
     else
     {
-        if (crystal_lattice_surface_cut_distance(lattice_position + a_lattice_delta) > cut_surface_bias)
+        if (crystal_lattice_surface_cut_distance(lattice_position + a_lattice_delta) > cut_surface_threshold)
         {
             render_flag = false;
         }
@@ -121,15 +121,12 @@ void main()
                 if (a_lattice_delta.x == 0)
                 {
                     // Carbon atom (sphere).
-                    if (carbon_cut_distance > -1.9)
+                    switch (cut_mode)
                     {
-                        // Near surface
-                        vs_out.color = vec3(1.0, 0.0, 0.0);
-                    }
-                    else
-                    {
-                        // Not near surface surface
-                        vs_out.color = vec3(1.0, 1.0, 1.0);
+                        case 1: vs_out.color = (carbon_cut_distance > -1.5) ? vec3(1.0, 0.6, 0.6) : vec3(1.0, 1.0, 1.0); break;
+                        case 2: vs_out.color = (carbon_cut_distance > -1.0) ? vec3(0.6, 1.0, 0.6) : vec3(1.0, 1.0, 1.0); break;
+                        case 3: vs_out.color = (carbon_cut_distance > -1.9) ? vec3(0.6, 0.6, 1.0) : vec3(1.0, 1.0, 1.0); break;
+                        default : vs_out.color = vec3(1.0, 1.0, 1.0); break;
                     }
                 }
                 else

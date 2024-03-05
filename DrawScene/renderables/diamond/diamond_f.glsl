@@ -14,7 +14,7 @@ in VS_OUT {
 // Intensities.
 const float ia = 0.2;
 const float id1 = 0.6;
-const float is1 = 1.0;
+const float is1 = 1.02;
 //const float id2 = 0.5;
 //const float is2 = 0.5;
 
