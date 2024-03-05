@@ -16,7 +16,7 @@ class Application:
 
     def __init__(self):
         self.diamond_model = None
-        self.render_distance = 48.0
+        self.render_distance = 60.0
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int):
@@ -183,6 +183,9 @@ class Application:
                 case glfw.KEY_3:
                     if self.diamond_model is not None:
                         self.diamond_model.cut = 3 if self.diamond_model.cut != 3 else 0
+                case glfw.KEY_C:
+                    if self.diamond_model is not None:
+                        self.diamond_model.color_mode = (self.diamond_model.color_mode + 1) % 2
                 case glfw.KEY_RIGHT_BRACKET:
                     if self.diamond_model is not None:
                         if (mods & glfw.MOD_ALT) != 0:

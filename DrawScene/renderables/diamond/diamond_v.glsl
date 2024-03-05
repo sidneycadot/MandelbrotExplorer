@@ -13,6 +13,7 @@ uniform mat4 transposed_inverse_model_view_matrix;
 uniform uint cut;
 uniform uint unit_cells_per_dimension;
 uniform float crystal_side_length;
+uniform uint color_mode;
 
 out VS_OUT {
     vec3 mv_surface;
@@ -27,17 +28,25 @@ vec3 vec4_to_vec3(vec4 v)
 
 const float UNIT_CELL_SIZE = 4.0;
 
-bool valid_lattice_position(vec3 pos)
+int crystal_lattice_position_type(vec3 pos)
 {
-    bool ok = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 0.5 * crystal_side_length;
+    // Return +1 : outside crystal.
+    // Return  0 : inside crystal, on cut surface.
+    // Return -1 : inside crystal, below cut surface.
+
+    bool candidate = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 0.5 * crystal_side_length;
+    if (!candidate)
+    {
+        return +1;
+    }
 
     switch (cut)
     {
-        case 1: if (pos.x < 0) ok = false; break;
-        case 2: if (pos.x + pos.y < 0) ok = false; break;
-        case 3: if (pos.x + pos.y + pos.z < 0) ok = false; break;
+        case 0: return -1;
+        case 1: return int(sign(pos.x));
+        case 2: return int(sign(pos.x + pos.y));
+        case 3: return int(sign(pos.x + pos.y + pos.z + 1));
     }
-    return ok;
 }
 
 void main()
@@ -58,14 +67,15 @@ void main()
 
     bool render_flag = true;
 
-    if (!valid_lattice_position(lattice_position))
+    int carbon_position_type = crystal_lattice_position_type(lattice_position);
+    if (carbon_position_type > 0)
     {
         render_flag = false;
     }
     else
     {
         lattice_position += a_lattice_delta;
-        if (!valid_lattice_position(lattice_position))
+        if (crystal_lattice_position_type(lattice_position) > 0)
         {
             render_flag = false;
         }
@@ -82,15 +92,43 @@ void main()
         vs_out.mv_surface = vec4_to_vec3(model_view_matrix * vec4(vertex_position, 1.0));
         vs_out.mv_normal = normalize((transposed_inverse_model_view_matrix * vec4(a_normal, 0.0)).xyz);
 
-        if (a_lattice_delta.x == 0)
+        switch(color_mode)
         {
-            // Carbon planet.
-            vs_out.color = 0.2 + 0.9 * a_lattice_position / 3;
-        }
-        else
-        {
-            // Carbon-carbon joint cylinder.
-            vs_out.color = vec3(1.0, 1.0, 1.0);
+            case 0:
+            {
+                if (a_lattice_delta.x == 0)
+                {
+                    // Carbon atom (sphere).
+                    vs_out.color = 0.2 + 0.9 * a_lattice_position / 3;
+                }
+                else
+                {
+                    // Carbon-carbon bond (cylinder).
+                    vs_out.color = vec3(1.0, 1.0, 1.0);
+                }
+                break;
+            }
+            case 1:
+            {
+                if (a_lattice_delta.x == 0)
+                {
+                    // Carbon atom (sphere).
+                    if (carbon_position_type < 0)
+                    {
+                        vs_out.color = vec3(1.0, 1.0, 1.0);
+                    }
+                    else
+                    {
+                        vs_out.color = vec3(1.0, 0.0, 0.0);
+                    }
+                }
+                else
+                {
+                    // Carbon-carbon bond (cylinder).
+                    vs_out.color = vec3(1.0, 1.0, 1.0);
+                }
+                break;
+            }
         }
     }
 }

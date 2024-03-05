@@ -45,7 +45,8 @@ class RenderableDiamond(Renderable):
 
         self.cut = 0
         self.unit_cells_per_dimension = 5
-        self.crystal_side_length = 14.0
+        self.crystal_side_length = 17.0
+        self.color_mode = 0
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "diamond")
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
@@ -58,6 +59,7 @@ class RenderableDiamond(Renderable):
         self._unit_cells_per_dimension_location = glGetUniformLocation(self._shader_program, "unit_cells_per_dimension")
         self._crystal_side_length_location = glGetUniformLocation(self._shader_program, "crystal_side_length")
         self._cut_location = glGetUniformLocation(self._shader_program, "cut")
+        self._color_mode_location = glGetUniformLocation(self._shader_program, "color_mode")
 
         vbo_dtype = np.dtype([
             ("a_vertex", np.float32, 3),          # Triangle vertex
@@ -204,6 +206,7 @@ class RenderableDiamond(Renderable):
             glUniformMatrix4fv(self._transposed_inverse_model_view_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view @ m_model).T.astype(np.float32))
 
             glUniform1ui(self._unit_cells_per_dimension_location, self.unit_cells_per_dimension)
+            glUniform1ui(self._color_mode_location, self.color_mode)
             glUniform1f(self._crystal_side_length_location, self.crystal_side_length)
             glUniform1ui(self._cut_location, self.cut)
 
