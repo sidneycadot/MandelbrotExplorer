@@ -56,6 +56,9 @@ def make_unit_sphere_triangles_tetrahedron(recursion_level: int):
 def make_unit_sphere_triangles(recursion_level: int):
     """Make unit planet by subdividing a dodecahedron."""
 
+    # Note: distance of center of each face to the origin is  0.7946544722917661,
+    #   or sqrt((5+2*sqrt(5))/15).
+
     q = np.sqrt(5)
     r = np.sqrt((5 - q)/10)
     s = np.sqrt((5 + q)/10)

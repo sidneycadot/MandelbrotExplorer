@@ -22,6 +22,7 @@ const float alpha = 100.0;
 
 void main()
 {
+
     vec3 k_material = fs_in.color;
 
     // NOTE: We do our geometric calculations in the "MV" coordinate system.
