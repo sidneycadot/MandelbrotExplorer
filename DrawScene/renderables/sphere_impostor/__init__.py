@@ -15,7 +15,7 @@ from renderables.geometry import make_unit_sphere_triangles
 
 class RenderableSphereImpostor(Renderable):
 
-    def __init__(self, m_xform=None):
+    def __init__(self, texture_filename: str, m_xform=None):
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "sphere_impostor")
 
@@ -32,12 +32,13 @@ class RenderableSphereImpostor(Renderable):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        texture_image_path = os.path.join(os.path.dirname(__file__), "earth.png")
+        texture_image_path = os.path.join(os.path.dirname(__file__), texture_filename)
 
         with Image.open(texture_image_path) as im:
             image = np.array(im)
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[1], image.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
+        glGenerateMipmap(GL_TEXTURE_2D)
 
         triangles = make_unit_sphere_triangles(recursion_level=0)
 

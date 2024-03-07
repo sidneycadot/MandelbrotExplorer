@@ -28,8 +28,7 @@ void main()
     // "h" is the impostor hitpoint position in the "unit sphere" coordinate system.
     vec3 h = (inverse_model_view_matrix * vec4(fs_in.mv_coordinate, 1)).xyz;
 
-    // Solve:
-    //   ray[alpha] := e + alpha * (h - e)
+    // Solve:    ray[alpha] := e + alpha * (h - e)
     // Find the smallest real value alpha such that ray[alpha]) intersects the unit sphere.
 
     vec3 eh = h - e; // eye-to-hitpoint vector.

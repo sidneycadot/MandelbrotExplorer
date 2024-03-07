@@ -22,5 +22,4 @@ void main()
     vs_out.mv_coordinate = (view_matrix * model_matrix * v).xyz;
 
     gl_Position = mvp * v;
-    //tex_coord = texture_coordinate;
 }

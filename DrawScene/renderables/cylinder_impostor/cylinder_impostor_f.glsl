@@ -46,6 +46,8 @@ void main()
 
     if (discriminant < 0)
     {
+        fragment_color = vec4(1.0, 1.0, 0.0, 1.0);
+        return;
         // The ray that hits the impostor doesn't hit the enclosed cylinder.
         discard;
     }
@@ -62,6 +64,8 @@ void main()
     if (abs(cylinder_hit.z) > 0.5)
     {
         // The cylinder is hit, but outside its z range [-0.5 .. +0.5].
+        fragment_color = vec4(0.0, 1.0, 1.0, 1.0);
+        return;
         discard;
     }
 

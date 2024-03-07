@@ -58,12 +58,12 @@ class Application:
         # Create the scene model.
         scene = RenderableScene()
 
-        draw_floor = False
+        draw_floor = True
         if draw_floor:
             scene.add_model(
                 RenderableModelTransformer(
                     RenderableFloor(8.0, 8.0),
-                    lambda: translate((0, 0, 0))
+                    lambda: translate((0, -1, 0))
                 )
             )
 
@@ -81,28 +81,37 @@ class Application:
                 )
             )
 
-        draw_sphere_impostor = False
+        draw_sphere_impostor = True
         if draw_sphere_impostor:
 
-            sphere_impostor = RenderableSphereImpostor()
+            sphere_imposter_constellation = RenderableScene()
 
-            scene.add_model(
+            earth = RenderableSphereImpostor("earth.png")
+
+            sphere_imposter_constellation.add_model(
                 RenderableModelTransformer(
-                    sphere_impostor,
-                    lambda: translate((+0.5, 0.0, 0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
+                    earth,
+                    lambda: translate((+0.8, 0.0, 0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 0 * world.time())
                 )
             )
 
-            moon = RenderablePlanet()
+            moon = RenderableSphereImpostor("moon.png")
 
-            scene.add_model(
+            sphere_imposter_constellation.add_model(
                 RenderableModelTransformer(
                     moon,
-                    lambda: translate((-0.5, 0.0, 0.3)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
+                    lambda: translate((-0.8, 0.0, 0.3)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 0 * world.time())
                 )
             )
 
-        draw_cylinder_impostor = True
+            scene.add_model(
+                RenderableModelTransformer(
+                    sphere_imposter_constellation,
+                    lambda: rotate((0, 1, 0), 1 * world.time())
+                )
+            )
+
+        draw_cylinder_impostor = False
         if draw_cylinder_impostor:
 
             cylinder_impostor = RenderableCylinderImpostor()
@@ -110,16 +119,16 @@ class Application:
             scene.add_model(
                 RenderableModelTransformer(
                     cylinder_impostor,
-                    lambda: translate((+0.05, 0.0, 0)) @ rotate((0, 1, 0), 0 * world.time()) @ rotate((1, 0, 0), 0.5 * world.time()) @ scale((0.2, 0.2, 4.0))
+                    lambda: translate((+0.25, 0.0, 0)) @ rotate((0, 1, 0), 0 * world.time()) @ rotate((1, 0, 0), 0.5 * world.time()) @ scale((0.2, 0.2, 4.0))
                 )
             )
 
-            moon = RenderablePlanet()
+            sphere_impostor = RenderableSphereImpostor("earth.jpg")
 
             scene.add_model(
                 RenderableModelTransformer(
-                    moon,
-                    lambda: translate((-0.5, 0.0, 0.0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
+                    sphere_impostor,
+                    lambda: translate((+0.0, 0.0, 0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
                 )
             )
 
