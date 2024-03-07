@@ -7,7 +7,7 @@ from OpenGL.GL import *
 
 from matrices import translate, rotate, scale, perspective_projection
 
-from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer, RenderableDiamond)
+from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer, RenderableDiamond, RenderableSphereImpostor, RenderableCylinderImpostor)
 
 from world import World
 
@@ -16,7 +16,7 @@ class Application:
 
     def __init__(self):
         self.diamond_model = None
-        self.render_distance = 60.0
+        self.render_distance = 12.0
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int):
@@ -81,18 +81,49 @@ class Application:
                 )
             )
 
-            num_around = 0
-            for ei_ in range(num_around):
-                scene.add_model(
-                    RenderableModelTransformer(
-                        earth,
-                        (lambda ei:
-                         lambda: translate((6.5 * np.cos(ei / num_around * 2 * np.pi), 6.5 * np.sin(ei / num_around * 2 * np.pi), 0.0)) @ scale(2.0) @ rotate((1, 0, 0), world.time())
-                         )(ei_)
-                    )
-                )
+        draw_sphere_impostor = False
+        if draw_sphere_impostor:
 
-        draw_diamond = True
+            sphere_impostor = RenderableSphereImpostor()
+
+            scene.add_model(
+                RenderableModelTransformer(
+                    sphere_impostor,
+                    lambda: translate((+0.5, 0.0, 0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
+                )
+            )
+
+            moon = RenderablePlanet()
+
+            scene.add_model(
+                RenderableModelTransformer(
+                    moon,
+                    lambda: translate((-0.5, 0.0, 0.3)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
+                )
+            )
+
+        draw_cylinder_impostor = True
+        if draw_cylinder_impostor:
+
+            cylinder_impostor = RenderableCylinderImpostor()
+
+            scene.add_model(
+                RenderableModelTransformer(
+                    cylinder_impostor,
+                    lambda: translate((+0.05, 0.0, 0)) @ rotate((0, 1, 0), 0 * world.time()) @ rotate((1, 0, 0), 0.5 * world.time()) @ scale((0.2, 0.2, 4.0))
+                )
+            )
+
+            moon = RenderablePlanet()
+
+            scene.add_model(
+                RenderableModelTransformer(
+                    moon,
+                    lambda: translate((-0.5, 0.0, 0.0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
+                )
+            )
+
+        draw_diamond = False
         if draw_diamond:
             self.diamond_model = RenderableDiamond()
 

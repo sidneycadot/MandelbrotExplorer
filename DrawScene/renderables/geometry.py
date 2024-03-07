@@ -95,7 +95,7 @@ def make_unit_sphere_triangles(recursion_level: int):
     return triangles
 
 
-def make_cylinder_triangles(subdivision_count) -> tuple[list, list]:
+def make_cylinder_triangles(subdivision_count: int, caps: bool) -> tuple[list, list]:
 
     zlo = -0.5
     zhi = +0.5
@@ -120,5 +120,24 @@ def make_cylinder_triangles(subdivision_count) -> tuple[list, list]:
         normal = ((x1, y1, 0), (x1, y1, 0), (x0, y0, 0))
         triangles.append(triangle)
         normals.append(normal)
+
+    if caps:
+        for i in range(subdivision_count):
+            a0 = (i + 0) / subdivision_count * 2.0 * np.pi
+            a1 = (i + 1) / subdivision_count * 2.0 * np.pi
+
+            x0 = np.cos(a0)
+            y0 = np.sin(a0)
+            x1 = np.cos(a1)
+            y1 = np.sin(a1)
+
+            triangle = ((0, 0, zhi), (x0, y0, zhi), (x1, y1, zhi))
+            normal = ((0, 0, 1), (0, 0, 1), (0, 0, 1))
+            triangles.append(triangle)
+            normals.append(normal)
+            triangle = ((0, 0, zlo), (x1, y1, zlo), (x0, y0, zlo))
+            normal = ((0, 0, -1), (0, 0, -1), (0, 0, -1))
+            triangles.append(triangle)
+            normals.append(normal)
 
     return triangles, normals

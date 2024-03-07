@@ -2,5 +2,5 @@
 
 
 class Renderable:
-    def render(self, m_projection, m_view, m_model):
+    def render(self, projection_matrix, view_matrix, model_matrix):
         raise NotImplementedError()
