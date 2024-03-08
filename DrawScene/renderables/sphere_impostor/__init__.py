@@ -25,6 +25,11 @@ class RenderableSphereImpostor(Renderable):
         self._view_matrix_location = glGetUniformLocation(self._shader_program, "view_matrix")
         self._projection_matrix_location = glGetUniformLocation(self._shader_program, "projection_matrix")
 
+        self._view_model_matrix_location = glGetUniformLocation(self._shader_program, "view_model_matrix")
+        self._projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "projection_view_model_matrix")
+        self._inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "inverse_view_model_matrix")
+        self._transposed_inverse_projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_projection_view_model_matrix")
+
         self._texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
@@ -112,6 +117,11 @@ class RenderableSphereImpostor(Renderable):
         glUniformMatrix4fv(self._model_matrix_location, 1, GL_TRUE, model_matrix.astype(np.float32))
         glUniformMatrix4fv(self._view_matrix_location, 1, GL_TRUE, view_matrix.astype(np.float32))
         glUniformMatrix4fv(self._projection_matrix_location, 1, GL_TRUE, projection_matrix.astype(np.float32))
+
+        glUniformMatrix4fv(self._view_model_matrix_location, 1, GL_TRUE, (view_matrix @ model_matrix).astype(np.float32))
+        glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, (projection_matrix @ view_matrix @ model_matrix).astype(np.float32))
+        glUniformMatrix4fv(self._inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).astype(np.float32))
+        glUniformMatrix4fv(self._transposed_inverse_projection_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(projection_matrix @ view_matrix @ model_matrix).T.astype(np.float32))
 
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glBindVertexArray(self._vao)

@@ -16,7 +16,7 @@ class Application:
 
     def __init__(self):
         self.diamond_model = None
-        self.render_distance = 12.0
+        self.render_distance = 10.0
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int):
@@ -58,7 +58,7 @@ class Application:
         # Create the scene model.
         scene = RenderableScene()
 
-        draw_floor = True
+        draw_floor = False
         if draw_floor:
             scene.add_model(
                 RenderableModelTransformer(
@@ -148,7 +148,7 @@ class Application:
         frame_counter = 0
         t_prev = None
 
-        glfw.swap_interval(1)
+        glfw.swap_interval(0)
         glPointSize(1)
 
         glClearColor(0.12, 0.12, 0.12, 1.0)
@@ -167,7 +167,7 @@ class Application:
 
             if t_prev is not None:
                 frame_duration = (t_now - t_prev)
-                #print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
+                print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
             t_prev = t_now
 
             # Make view matrix.
