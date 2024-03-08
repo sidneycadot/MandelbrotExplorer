@@ -7,7 +7,8 @@ from OpenGL.GL import *
 
 from matrices import translate, rotate, scale, perspective_projection
 
-from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer, RenderableDiamond, RenderableSphereImpostor, RenderableCylinderImpostor)
+from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,
+                         RenderableDiamond, RenderableSphereImpostor, RenderableCylinderImpostor)
 
 from world import World
 
@@ -81,7 +82,7 @@ class Application:
                 )
             )
 
-        draw_sphere_impostor = True
+        draw_sphere_impostor = False
         if draw_sphere_impostor:
 
             sphere_imposter_constellation = RenderableScene()
@@ -111,7 +112,7 @@ class Application:
                 )
             )
 
-        draw_cylinder_impostor = False
+        draw_cylinder_impostor = True
         if draw_cylinder_impostor:
 
             cylinder_impostor = RenderableCylinderImpostor()
@@ -123,7 +124,7 @@ class Application:
                 )
             )
 
-            sphere_impostor = RenderableSphereImpostor("earth.jpg")
+            sphere_impostor = RenderableSphereImpostor("earth.png")
 
             scene.add_model(
                 RenderableModelTransformer(
@@ -149,8 +150,8 @@ class Application:
         t_prev = None
 
         glfw.swap_interval(0)
-        glPointSize(1)
 
+        glPointSize(1)
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
 

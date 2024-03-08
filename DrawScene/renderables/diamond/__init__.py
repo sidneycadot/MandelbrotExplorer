@@ -12,7 +12,7 @@ from renderables.geometry import make_unit_sphere_triangles, make_cylinder_trian
 
 
 def make_joint_triangles(p1, p2, diameter, subdivision_count):
-    (joint_triangles, joint_normals) = make_cylinder_triangles(subdivision_count)
+    (joint_triangles, joint_normals) = make_cylinder_triangles(subdivision_count, False)
     joint_triangles_vertices = np.array(joint_triangles).reshape(-1, 3)
     joint_triangles_normals = np.array(joint_normals).reshape(-1, 3)
 
