@@ -1,10 +1,10 @@
-"""The renderables package."""
+"""This package provides several Renderables for import."""
 
-from .scene import RenderableScene
-from .transformer import RenderableModelTransformer
+from .scene.scene import RenderableScene
+from .model_transformer.model_transformer import RenderableModelTransformer
 
-from .floor import RenderableFloor
-from .planet import RenderablePlanet
-from .diamond import RenderableDiamond
-from .sphere_impostor import RenderableSphereImpostor
-from .cylinder_impostor import RenderableCylinderImpostor
+from .floor.floor import RenderableFloor
+from .planet.planet import RenderablePlanet
+from .diamond.diamond import RenderableDiamond
+from .sphere_impostor.sphere_impostor import RenderableSphereImpostor
+from .cylinder_impostor.cylinder_impostor import RenderableCylinderImpostor

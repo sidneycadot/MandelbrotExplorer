@@ -19,6 +19,7 @@ uniform mat4 transposed_inverse_view_model_matrix;
 uniform mat4 transposed_inverse_projection_view_model_matrix;
 
 uniform sampler2D my_texture;
+const float INVALID = 1.0 / 0.0;
 
 const float PI = 4 * atan(1);
 
@@ -27,8 +28,6 @@ const float id1 = 0.6;
 const float is1 = 1.02;
 
 const float phong_alpha = 20.0;
-
-const float NaN = 0.0 / 0.0;
 
 float intersect_unit_sphere(vec3 origin, vec3 direction)
 {
@@ -45,7 +44,7 @@ float intersect_unit_sphere(vec3 origin, vec3 direction)
     // This check can be omitted, but it is adventageous to keep it for improved performance.
     if (discriminant < 0)
     {
-        return NaN;
+        return INVALID;
     }
     return (-uo - sqrt(discriminant)) / uu;
 }
@@ -67,7 +66,7 @@ void main()
 
     float alpha = intersect_unit_sphere(e, eh);
 
-    if (isnan(alpha))
+    if (alpha == INVALID)
     {
         discard;
     }
@@ -77,6 +76,7 @@ void main()
     vec3 sphere_hit = e + alpha * eh;
 
     // Find texture coordinates.
+
     float u = 0.5 + 0.5 * atan(sphere_hit.x, sphere_hit.z) / PI;
     float v = 0.5 - 0.5 * sphere_hit.y;
 
@@ -112,5 +112,4 @@ void main()
     //vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1 + id2 * contrib_d2 + is2 * contrib_s2);
 
     fragment_color = vec4(phong_color, 1.0);
-
 }
