@@ -13,32 +13,30 @@ from renderables.opengl_utilities import create_opengl_program
 from renderables.geometry import make_unit_sphere_triangles, make_cylinder_triangles, normalize
 
 
-def make_joint_triangles(p1, p2, diameter, subdivision_count):
-    (joint_triangles, joint_normals) = make_cylinder_triangles(subdivision_count, False)
-    joint_triangles_vertices = np.array(joint_triangles).reshape(-1, 3)
-    joint_triangles_normals = np.array(joint_normals).reshape(-1, 3)
+def make_cylinder_placement_transform(p1, p2, diameter):
 
-    upvec = np.array((0.0, 0.0, 1.0))
-    pvec = normalize(p2 - p1)
+    up_vector = np.array((0, 0, 1))
+    axis_vector = normalize(p2 - p1)
 
-    rvec = np.cross(upvec, pvec)
-    rangle = np.arccos(np.dot(upvec, pvec))
+    rotation_vector = np.cross(up_vector, axis_vector)
+    rotation_angle = np.arccos(np.dot(up_vector, axis_vector))
 
-    if np.linalg.norm(rvec) == 0:  # pvec is precisely parallel to upvec.
-        if rangle > 0:
+    if np.linalg.norm(rotation_vector) == 0:  # pvec is precisely parallel to upvec.
+        if rotation_angle > 0:
             m_rot = scale(+1.0)  # Identity matrix.
         else:
             m_rot = scale(-1.0)
     else:
-        m_rot = rotate(rvec, rangle)
+        m_rot = rotate(rotation_vector, rotation_angle)
 
     # Get the requested cylinder from a unit cylinder by applying a translation, scaling, rotation, and translation.
-    m_xform = translate((p1[0], p1[1], p1[2])) @ m_rot @ scale((diameter, diameter, np.linalg.norm(p1 - p2))) @ translate((0, 0, 0.5))
+    placement_matrix = translate(p1) @ m_rot @ scale((diameter, diameter, np.linalg.norm(p2 - p1))) @ translate((0, 0, 0.5))
 
-    joint_triangles_vertices = apply_transform_to_vertices(m_xform, 1.2 * joint_triangles_vertices)
-    joint_triangles_normals = apply_transform_to_normals(m_xform, joint_triangles_normals)
+    return placement_matrix
 
-    return (joint_triangles_vertices, joint_triangles_normals, m_xform)
+
+def in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
+    return (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2
 
 
 class RenderableDiamondImpostor(Renderable):
@@ -77,44 +75,30 @@ class RenderableDiamondImpostor(Renderable):
         sphere_triangles = make_unit_sphere_triangles(recursion_level=0)
         sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
 
+        cylinder_triangles = make_cylinder_triangles(-0.5, +0.5, subdivision_count=6, capped=False)
+        cylinder_triangle_vertices = np.array(cylinder_triangles).reshape(-1, 3)
+
         vbo_data_list = []
-
-        add_red_center_spheres = False
-        if add_red_center_spheres:
-            # Add central red sphere.
-
-            m_xform = translate((2, 2, 2)) @ scale(0.6)
-            m_xform_inv = np.linalg.inv(m_xform)
-
-            current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform @ scale(1.3), sphere_triangle_vertices)
-
-            vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
-            vbo_data["a_vertex"] = current_sphere_triangle_vertices
-            vbo_data["a_lattice_position"] = (2, 2, 2)
-            vbo_data["a_lattice_delta"] = (0, 0, 0)
-            vbo_data["inverse_placement_matrix_row1"] = m_xform_inv[0]
-            vbo_data["inverse_placement_matrix_row2"] = m_xform_inv[1]
-            vbo_data["inverse_placement_matrix_row3"] = m_xform_inv[2]
-
-            vbo_data_list.append(vbo_data)
 
         add_diamond_geometry = True
         if add_diamond_geometry:
             for (ix, iy, iz) in itertools.product(range(4), repeat=3):
-                if (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2:
+                if in_diamond_lattice(ix, iy, iz):
 
-                    m_xform = translate((ix, iy, iz)) @ scale(0.3)
-                    m_xform_inv = np.linalg.inv(m_xform)
+                    placement_matrix = translate((ix, iy, iz)) @ scale(0.3)
+                    inverse_placement_matrix = np.linalg.inv(placement_matrix)
 
-                    current_sphere_triangle_vertices = apply_transform_to_vertices(m_xform @ scale(1.3), sphere_triangle_vertices)
+                    impostor_hull_matrix = placement_matrix @ scale(1.3)
 
-                    vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_sphere_triangle_vertices))
-                    vbo_data["a_vertex"] = current_sphere_triangle_vertices
+                    impostor_triangle_vertices = apply_transform_to_vertices(impostor_hull_matrix, sphere_triangle_vertices)
+
+                    vbo_data = np.empty(dtype=vbo_dtype, shape=len(impostor_triangle_vertices))
+                    vbo_data["a_vertex"] = impostor_triangle_vertices
                     vbo_data["a_lattice_position"] = (ix, iy, iz)
                     vbo_data["a_lattice_delta"] = (0, 0, 0)
-                    vbo_data["inverse_placement_matrix_row1"] = m_xform_inv[0]
-                    vbo_data["inverse_placement_matrix_row2"] = m_xform_inv[1]
-                    vbo_data["inverse_placement_matrix_row3"] = m_xform_inv[2]
+                    vbo_data["inverse_placement_matrix_row1"] = inverse_placement_matrix[0]
+                    vbo_data["inverse_placement_matrix_row2"] = inverse_placement_matrix[1]
+                    vbo_data["inverse_placement_matrix_row3"] = inverse_placement_matrix[2]
 
                     vbo_data_list.append(vbo_data)
 
@@ -127,21 +111,25 @@ class RenderableDiamondImpostor(Renderable):
                         if max(jx, jy, jz) > 3:
                             continue
 
-                        if (jx - jy) % 2 == 0 and (jx - jz) % 2 == 0 and (jx + jy + jz) % 4 < 2:
+                        if in_diamond_lattice(jx, jy, jz):
 
                             p1 = np.array((ix, iy, iz))
                             p2 = np.array((jx, jy, jz))
 
-                            (current_joint_triangles, current_joint_normals, m_xform) = make_joint_triangles(p1, p2, 0.10, 6)
-                            m_xform_inv = np.linalg.inv(m_xform)
+                            placement_matrix = make_cylinder_placement_transform(p1, p2, 0.10)
+                            inverse_placement_matrix = np.linalg.inv(placement_matrix)
 
-                            vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_joint_triangles))
-                            vbo_data["a_vertex"] = current_joint_triangles
+                            impostor_hull_matrix = placement_matrix @ scale(1.1)
+
+                            current_bond_triangle_vertices = apply_transform_to_vertices(impostor_hull_matrix, cylinder_triangle_vertices)
+
+                            vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_bond_triangle_vertices))
+                            vbo_data["a_vertex"] = current_bond_triangle_vertices
                             vbo_data["a_lattice_position"] = (ix, iy, iz)
                             vbo_data["a_lattice_delta"] = (dx, dy, dz)
-                            vbo_data["inverse_placement_matrix_row1"] = m_xform_inv[0]
-                            vbo_data["inverse_placement_matrix_row2"] = m_xform_inv[1]
-                            vbo_data["inverse_placement_matrix_row3"] = m_xform_inv[2]
+                            vbo_data["inverse_placement_matrix_row1"] = inverse_placement_matrix[0]
+                            vbo_data["inverse_placement_matrix_row2"] = inverse_placement_matrix[1]
+                            vbo_data["inverse_placement_matrix_row3"] = inverse_placement_matrix[2]
 
                             vbo_data_list.append(vbo_data)
 

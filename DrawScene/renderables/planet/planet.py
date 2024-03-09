@@ -11,7 +11,7 @@ from OpenGL.GL import *
 from matrices import apply_transform_to_vertices
 from renderables.renderable import Renderable
 from renderables.opengl_utilities import create_opengl_program
-from renderables.geometry import make_unit_sphere_triangles, make_unit_sphere_triangles_tetrahedron
+from renderables.geometry import make_unit_sphere_triangles
 
 
 class RenderablePlanet(Renderable):

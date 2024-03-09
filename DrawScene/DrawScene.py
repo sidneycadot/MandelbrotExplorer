@@ -8,7 +8,7 @@ from OpenGL.GL import *
 from matrices import translate, rotate, scale, perspective_projection
 
 from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,
-                         RenderableDiamond, RenderableSphereImpostor, RenderableCylinderImpostor,
+                         RenderableSphereImpostor, RenderableCylinderImpostor,
                          RenderableDiamondImpostor)
 
 from world import World
@@ -143,17 +143,6 @@ class Application:
                 RenderableModelTransformer(
                     sphere_impostor,
                     lambda: translate((+0.0, 0.0, 0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
-                )
-            )
-
-        draw_diamond = False
-        if draw_diamond:
-            self.diamond_model = RenderableDiamond()
-
-            scene.add_model(
-                RenderableModelTransformer(
-                    self.diamond_model,
-                    lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.1 * world.time()) @ rotate((0, 0, 1), 0.15 * world.time()) @ rotate((0, 1, 0), 0.05 * world.time())
                 )
             )
 

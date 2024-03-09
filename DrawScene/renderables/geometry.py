@@ -30,8 +30,8 @@ def _make_unit_sphere_triangles_recursive(triangle, recursion_level: int) -> lis
     return triangles
 
 
-def make_unit_sphere_triangles_tetrahedron(recursion_level: int):
-    """Make unit planet by subdividing a tetrahedron."""
+def make_unit_sphere_triangles_from_tetrahedron(recursion_level: int):
+    """Make unit sphere by subdividing a tetrahedron."""
 
     v1 = normalize((-1.0, -1.0, -1.0))
     v2 = normalize((+1.0, +1.0, -1.0))
@@ -54,7 +54,7 @@ def make_unit_sphere_triangles_tetrahedron(recursion_level: int):
 
 
 def make_unit_sphere_triangles(recursion_level: int):
-    """Make unit planet by subdividing a dodecahedron."""
+    """Make unit sphere by subdividing a dodecahedron."""
 
     # Note: distance of center of each face to the origin is  0.7946544722917661,
     #   or sqrt((5+2*sqrt(5))/15).
@@ -95,13 +95,13 @@ def make_unit_sphere_triangles(recursion_level: int):
     return triangles
 
 
-def make_cylinder_triangles(subdivision_count: int, caps: bool) -> tuple[list, list]:
+def make_cylinder_triangles(z_lo: float, z_hi: float, subdivision_count: int, capped: bool):
 
-    zlo = -0.5
-    zhi = +0.5
+    if not (z_lo < z_hi):
+        raise ValueError()
 
-    normals = []
     triangles = []
+
     for i in range(subdivision_count):
         a0 = (i + 0) / subdivision_count * 2.0 * np.pi
         a1 = (i + 1) / subdivision_count * 2.0 * np.pi
@@ -111,17 +111,10 @@ def make_cylinder_triangles(subdivision_count: int, caps: bool) -> tuple[list, l
         x1 = np.cos(a1)
         y1 = np.sin(a1)
 
-        triangle = ((x0, y0, zlo), (x1, y1, zlo), (x0, y0, zhi))
-        normal = ((x0, y0, 0), (x1, y1, 0), (x0, y0, 0))
-        triangles.append(triangle)
-        normals.append(normal)
+        triangles.append(((x0, y0, z_lo), (x1, y1, z_lo), (x0, y0, z_hi)))
+        triangles.append(((x1, y1, z_lo), (x1, y1, z_hi), (x0, y0, z_hi)))
 
-        triangle = ((x1, y1, zlo), (x1, y1, zhi), (x0, y0, zhi))
-        normal = ((x1, y1, 0), (x1, y1, 0), (x0, y0, 0))
-        triangles.append(triangle)
-        normals.append(normal)
-
-    if caps:
+    if capped:
         for i in range(subdivision_count):
             a0 = (i + 0) / subdivision_count * 2.0 * np.pi
             a1 = (i + 1) / subdivision_count * 2.0 * np.pi
@@ -131,13 +124,7 @@ def make_cylinder_triangles(subdivision_count: int, caps: bool) -> tuple[list, l
             x1 = np.cos(a1)
             y1 = np.sin(a1)
 
-            triangle = ((0, 0, zhi), (x0, y0, zhi), (x1, y1, zhi))
-            normal = ((0, 0, 1), (0, 0, 1), (0, 0, 1))
-            triangles.append(triangle)
-            normals.append(normal)
-            triangle = ((0, 0, zlo), (x1, y1, zlo), (x0, y0, zlo))
-            normal = ((0, 0, -1), (0, 0, -1), (0, 0, -1))
-            triangles.append(triangle)
-            normals.append(normal)
+            triangles.append(((0, 0, z_hi), (x0, y0, z_hi), (x1, y1, z_hi)))
+            triangles.append(((0, 0, z_lo), (x1, y1, z_lo), (x0, y0, z_lo)))
 
-    return triangles, normals
+    return triangles
