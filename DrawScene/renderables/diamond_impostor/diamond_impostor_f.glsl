@@ -97,7 +97,7 @@ void main()
 
     vec4 projection = fs_in.object_to_projection_space_matrix * vec4(object_hit, 1);
 
-    gl_FragDepth = 0.5 - 0.5 *  (projection.z / projection.w);
+    gl_FragDepth = 0.5 + 0.5 *  (projection.z / projection.w);
 
     vec3 object_normal = (fs_in.object_type == 0) ? object_hit : vec3(object_hit.xy, 0);
 

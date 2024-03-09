@@ -1,16 +1,5 @@
 #! /usr/bin/env python3
 
-# Benchmarks:
-# - color mode 0
-# - cut mode 0
-# - 1280x1024 resolution
-# - render distance 350
-# - 27 unit spheres per side
-# - crystal side length 104
-#
-# 10.70 ms per frame
-# 10.65 ms per frame    -- only pass "object_type" from vertex shader to fragment shader, rather than lattice coordinates.
-
 import numpy as np
 
 import glfw
@@ -29,7 +18,7 @@ class Application:
 
     def __init__(self):
         self.diamond_model = None
-        self.render_distance = 350.0
+        self.render_distance = 60.0
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int, fullscreen_flag: bool):
@@ -44,7 +33,7 @@ class Application:
 
         # Create the window.
 
-        use_secondary_monitor = True
+        use_secondary_monitor = False
         if use_secondary_monitor:
             monitors = glfw.get_monitors()
             monitor = monitors[-1]
@@ -55,7 +44,7 @@ class Application:
 
             window = glfw.create_window(3840, 2160, "DrawScene", monitor, None)
         else:
-            window = glfw.create_window(1280, 960, "DrawScene", None, None)
+            window = glfw.create_window(640, 480, "DrawScene", None, None)
 
         if not window:
             raise RuntimeError("Unable to create window using GLFW.")
@@ -175,7 +164,7 @@ class Application:
             scene.add_model(
                 RenderableModelTransformer(
                     self.diamond_model,
-                    lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.02 * world.time()) @ rotate((0, 0, 1), 0.01 * world.time()) @ rotate((0, 1, 0), 0.015 * world.time())
+                    lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.13 * world.time()) @ rotate((0, 0, 1), 0.11 * world.time()) @ rotate((0, 1, 0), 0.07 * world.time())
                 )
             )
 
@@ -184,7 +173,7 @@ class Application:
         frame_counter = 0
         t_prev = None
 
-        glfw.swap_interval(0)
+        glfw.swap_interval(1)
 
         glPointSize(1)
         glClearColor(0.12, 0.12, 0.12, 1.0)
@@ -270,13 +259,13 @@ class Application:
                         if (mods & glfw.MOD_SHIFT) != 0:
                             self.diamond_model.unit_cells_per_dimension = self.diamond_model.unit_cells_per_dimension + 2
                         else:
-                            self.diamond_model.crystal_side_length = self.diamond_model.crystal_side_length + 1.0
+                            self.diamond_model.crystal_side_length = self.diamond_model.crystal_side_length + 2.0
                 case glfw.KEY_LEFT_BRACKET:
                         if self.diamond_model is not None:
                             if (mods & glfw.MOD_SHIFT) != 0:
                                 self.diamond_model.unit_cells_per_dimension = max(1, self.diamond_model.unit_cells_per_dimension - 2)
                             else:
-                                self.diamond_model.crystal_side_length = max(0, self.diamond_model.crystal_side_length - 1.0)
+                                self.diamond_model.crystal_side_length = max(0, self.diamond_model.crystal_side_length - 2.0)
                 case glfw.KEY_UP:
                     if self.diamond_model is not None:
                         self.render_distance =  max(0.0, self.render_distance - 5.0)

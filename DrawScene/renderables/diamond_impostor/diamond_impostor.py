@@ -45,10 +45,10 @@ class RenderableDiamondImpostor(Renderable):
 
     def __init__(self):
 
-        self.cut_mode = 0
-        self.unit_cells_per_dimension = 27
-        self.crystal_side_length = 104.0
         self.color_mode = 0
+        self.cut_mode = 0
+        self.unit_cells_per_dimension = 5
+        self.crystal_side_length = 16.0
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "diamond_impostor")
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
