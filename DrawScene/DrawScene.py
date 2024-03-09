@@ -8,7 +8,8 @@ from OpenGL.GL import *
 from matrices import translate, rotate, scale, perspective_projection
 
 from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,
-                         RenderableDiamond, RenderableSphereImpostor, RenderableCylinderImpostor)
+                         RenderableDiamond, RenderableSphereImpostor, RenderableCylinderImpostor,
+                         RenderableDiamondImpostor)
 
 from world import World
 
@@ -17,7 +18,7 @@ class Application:
 
     def __init__(self):
         self.diamond_model = None
-        self.render_distance = 10.0
+        self.render_distance = 15.0
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int):
@@ -59,12 +60,12 @@ class Application:
         # Create the scene model.
         scene = RenderableScene()
 
-        draw_floor = False
+        draw_floor = True
         if draw_floor:
             scene.add_model(
                 RenderableModelTransformer(
                     RenderableFloor(8.0, 8.0),
-                    lambda: translate((0, -1, 0))
+                    lambda: translate((0, 0, 0))
                 )
             )
 
@@ -112,7 +113,7 @@ class Application:
                 )
             )
 
-        draw_cylinder_impostor = True
+        draw_cylinder_impostor = False
         if draw_cylinder_impostor:
 
             cylinder_impostor = RenderableCylinderImpostor()
@@ -140,7 +141,18 @@ class Application:
             scene.add_model(
                 RenderableModelTransformer(
                     self.diamond_model,
-                    lambda: translate((0, 0.0, 0)) @ rotate((1, 0, 0), 0.2 * world.time()) @ rotate((0, 0, 1), 0.3 * world.time()) @ rotate((0, 1, 0), 0.1 * world.time())
+                    lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.1 * world.time()) @ rotate((0, 0, 1), 0.15 * world.time()) @ rotate((0, 1, 0), 0.05 * world.time())
+                )
+            )
+
+        draw_diamond_impostor = True
+        if draw_diamond_impostor:
+            self.diamond_model = RenderableDiamondImpostor()
+
+            scene.add_model(
+                RenderableModelTransformer(
+                    self.diamond_model,
+                    lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.05 * world.time()) @ rotate((0, 0, 1), 0.1 * world.time()) @ rotate((0, 1, 0), 0.15 * world.time())
                 )
             )
 
@@ -168,7 +180,7 @@ class Application:
 
             if t_prev is not None:
                 frame_duration = (t_now - t_prev)
-                print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
+                #print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
             t_prev = t_now
 
             # Make view matrix.
@@ -229,20 +241,22 @@ class Application:
                         self.diamond_model.color_mode = (self.diamond_model.color_mode + 1) % 2
                 case glfw.KEY_RIGHT_BRACKET:
                     if self.diamond_model is not None:
-                        if (mods & glfw.MOD_ALT) != 0:
-                            self.render_distance =  max(0.0, self.render_distance - 5.0)
-                        elif (mods & glfw.MOD_SHIFT) != 0:
+                        if (mods & glfw.MOD_SHIFT) != 0:
                             self.diamond_model.unit_cells_per_dimension = self.diamond_model.unit_cells_per_dimension + 2
                         else:
                             self.diamond_model.crystal_side_length = self.diamond_model.crystal_side_length + 1.0
                 case glfw.KEY_LEFT_BRACKET:
                         if self.diamond_model is not None:
-                            if (mods & glfw.MOD_ALT) != 0:
-                                self.render_distance = self.render_distance + 5.0
-                            elif (mods & glfw.MOD_SHIFT) != 0:
+                            if (mods & glfw.MOD_SHIFT) != 0:
                                 self.diamond_model.unit_cells_per_dimension = max(1, self.diamond_model.unit_cells_per_dimension - 2)
                             else:
                                 self.diamond_model.crystal_side_length = max(0, self.diamond_model.crystal_side_length - 1.0)
+                case glfw.KEY_UP:
+                    if self.diamond_model is not None:
+                        self.render_distance =  max(0.0, self.render_distance - 5.0)
+                case glfw.KEY_DOWN:
+                        if self.diamond_model is not None:
+                            self.render_distance = self.render_distance + 5.0
 
             if self.diamond_model is not None:
                 print("render distance {} diamond cut: {} diamond unit_cells_per_dimension: {} diamond crystal_side_length: {}".format(

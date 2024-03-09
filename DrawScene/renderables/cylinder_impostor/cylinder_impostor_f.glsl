@@ -19,7 +19,7 @@ uniform mat4 transposed_inverse_view_matrix;
 uniform sampler2D my_texture;
 
 const float PI = 4 * atan(1);
-const float INVALID = 0.0 / 0.0;
+const float INVALID = -1;
 
 const float ia = 0.2;
 const float id1 = 0.6;
@@ -31,7 +31,8 @@ float intersect_unit_cylinder(vec2 origin, vec2 direction)
 {
     // See: https://en.wikipedia.org/wiki/Line–sphere_intersection
     //
-    // Find smallest real alpha such that: origin + alpha * direction is on the unit circle.
+    // Find smallest real alpha such that: origin + alpha * direction is on the unit cylinder.
+    // The unit-cylinder stretched for -inf to +inf in the Z direction.
     //
     float oo = dot(origin, origin);
     float uo = dot(direction, origin);

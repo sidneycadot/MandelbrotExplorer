@@ -6,5 +6,7 @@ from .model_transformer.model_transformer import RenderableModelTransformer
 from .floor.floor import RenderableFloor
 from .planet.planet import RenderablePlanet
 from .diamond.diamond import RenderableDiamond
+
 from .sphere_impostor.sphere_impostor import RenderableSphereImpostor
 from .cylinder_impostor.cylinder_impostor import RenderableCylinderImpostor
+from .diamond_impostor.diamond_impostor import RenderableDiamondImpostor

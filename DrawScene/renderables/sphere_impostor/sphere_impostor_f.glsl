@@ -19,7 +19,7 @@ uniform mat4 transposed_inverse_view_model_matrix;
 uniform mat4 transposed_inverse_projection_view_model_matrix;
 
 uniform sampler2D my_texture;
-const float INVALID = 1.0 / 0.0;
+const float INVALID = -1.0;
 
 const float PI = 4 * atan(1);
 
@@ -28,6 +28,8 @@ const float id1 = 0.6;
 const float is1 = 1.02;
 
 const float phong_alpha = 20.0;
+
+const
 
 float intersect_unit_sphere(vec3 origin, vec3 direction)
 {
