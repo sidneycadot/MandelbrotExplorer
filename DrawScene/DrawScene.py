@@ -1,5 +1,16 @@
 #! /usr/bin/env python3
 
+# Benchmarks:
+# - color mode 0
+# - cut mode 0
+# - 1280x1024 resolution
+# - render distance 350
+# - 27 unit spheres per side
+# - crystal side length 104
+#
+# 10.70 ms per frame
+# 10.65 ms per frame    -- only pass "object_type" from vertex shader to fragment shader, rather than lattice coordinates.
+
 import numpy as np
 
 import glfw
@@ -18,10 +29,10 @@ class Application:
 
     def __init__(self):
         self.diamond_model = None
-        self.render_distance = 15.0
+        self.render_distance = 350.0
 
     @staticmethod
-    def create_glfw_window(version_major: int, version_minor: int):
+    def create_glfw_window(version_major: int, version_minor: int, fullscreen_flag: bool):
         """Create a window using GLFW."""
 
         # Set up window creation hints.
@@ -33,7 +44,19 @@ class Application:
 
         # Create the window.
 
-        window = glfw.create_window(640, 480, "DrawScene", None, None)
+        use_secondary_monitor = True
+        if use_secondary_monitor:
+            monitors = glfw.get_monitors()
+            monitor = monitors[-1]
+
+            modes = glfw.get_video_modes(monitor)
+            for mode in modes:
+                print("mode:", mode.size, mode.bits, mode.refresh_rate)
+
+            window = glfw.create_window(3840, 2160, "DrawScene", monitor, None)
+        else:
+            window = glfw.create_window(1280, 960, "DrawScene", None, None)
+
         if not window:
             raise RuntimeError("Unable to create window using GLFW.")
 
@@ -48,7 +71,7 @@ class Application:
 
         # Create a GLFW window and set it as the current OpenGL context.
 
-        window = Application.create_glfw_window(4, 1)
+        window = Application.create_glfw_window(4, 1, True)
 
         glfw.set_framebuffer_size_callback(window, lambda *args: Application.framebuffer_size_callback(*args))
         glfw.set_key_callback(window, lambda *args: self.key_callback(*args))
@@ -60,7 +83,7 @@ class Application:
         # Create the scene model.
         scene = RenderableScene()
 
-        draw_floor = True
+        draw_floor = False
         if draw_floor:
             scene.add_model(
                 RenderableModelTransformer(
@@ -152,7 +175,7 @@ class Application:
             scene.add_model(
                 RenderableModelTransformer(
                     self.diamond_model,
-                    lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.05 * world.time()) @ rotate((0, 0, 1), 0.1 * world.time()) @ rotate((0, 1, 0), 0.15 * world.time())
+                    lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.02 * world.time()) @ rotate((0, 0, 1), 0.01 * world.time()) @ rotate((0, 1, 0), 0.015 * world.time())
                 )
             )
 
@@ -174,14 +197,17 @@ class Application:
         near_plane = 0.5
         far_plane = 1000.0
 
+        num_report_frames = 100
+
         while not glfw.window_should_close(window):
 
             t_now = world.sample_time()
 
-            if t_prev is not None:
-                frame_duration = (t_now - t_prev)
-                #print("@@ {:20.4f} ms".format(frame_duration * 1000.0))
-            t_prev = t_now
+            if frame_counter % num_report_frames == 0:
+                if t_prev is not None:
+                    frame_duration = (t_now - t_prev) / num_report_frames
+                    print("@@ {:20.4f} ms per frame".format(frame_duration * 1000.0))
+                t_prev = t_now
 
             # Make view matrix.
 

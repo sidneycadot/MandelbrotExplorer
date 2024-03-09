@@ -3,26 +3,25 @@
 
 uniform mat4 transposed_inverse_view_matrix;
 uniform mat4 inverse_view_model_matrix;
-uniform mat4 projection_matrix;
-
-layout(location = 0) out vec4 fragment_color;
 
 in VS_OUT {
     vec3 mv_surface;
     vec3 color;
-    flat ivec3 a_lattice_position;
-    flat ivec3 a_lattice_delta;
-    flat mat4x3 a_inverse_placement_matrix;
+    flat mat4x4 modelview_to_object_space_matrix;
+    flat mat4x4 object_to_projection_space_matrix;
+    flat int object_type; // 0 == sphere, 1 == cylinder.
 } fs_in;
 
-// Intensities.
-const float ia = 0.2;
-const float id1 = 0.6;
-const float is1 = 0.5;
-//const float id2 = 0.5;
-//const float is2 = 0.5;
+layout(location = 0) out vec4 fragment_color;
 
-const float phong_alpha = 20;
+// Phong shading intensities.
+const float ia  = 0.2; // Ambient intensity.
+const float id1 = 0.6; // Diffuse intensity of the first light source.
+const float is1 = 0.5; // Specular intensity of the first light source.
+
+const float phong_alpha = 20; // Alpha value for specular reflection.
+
+const vec3 m_lightsource1_direction = normalize(vec3(+1, 1, 1));
 
 const float INVALID = -1.0;
 
@@ -69,142 +68,57 @@ float intersect_unit_cylinder(vec2 origin, vec2 direction)
 
 void main()
 {
-    if (fs_in.a_lattice_delta.x == 0)
+    vec3 object_impostor_hit = (fs_in.modelview_to_object_space_matrix * vec4(fs_in.mv_surface, 1)).xyz;
+    vec3 object_eye = (fs_in.modelview_to_object_space_matrix * vec4(0, 0, 0, 1)).xyz;
+
+    vec3 object_eye_to_impostor_hit_vector = object_impostor_hit - object_eye; // eye-to-hitpoint vector.
+
+    float alpha = (fs_in.object_type == 0) ? intersect_unit_sphere(object_eye, object_eye_to_impostor_hit_vector) : intersect_unit_cylinder(object_eye.xy, object_eye_to_impostor_hit_vector.xy);
+
+    if (alpha < 0)
     {
-        // The triangle is part of a sphere impostor hull.
-
-        mat4 inverse_placement_matrix = mat4(
-            fs_in.a_inverse_placement_matrix[0][0], fs_in.a_inverse_placement_matrix[0][1], fs_in.a_inverse_placement_matrix[0][2], 0,
-            fs_in.a_inverse_placement_matrix[1][0], fs_in.a_inverse_placement_matrix[1][1], fs_in.a_inverse_placement_matrix[1][2], 0,
-            fs_in.a_inverse_placement_matrix[2][0], fs_in.a_inverse_placement_matrix[2][1], fs_in.a_inverse_placement_matrix[2][2], 0,
-            fs_in.a_inverse_placement_matrix[3][0], fs_in.a_inverse_placement_matrix[3][1], fs_in.a_inverse_placement_matrix[3][2], 1
-        );
-
-        mat4 to_obj_space = inverse_placement_matrix * inverse_view_model_matrix;
-
-        vec3 h = (to_obj_space * vec4(fs_in.mv_surface, 1)).xyz;
-        vec3 e = (to_obj_space * vec4(0, 0, 0, 1)).xyz;
-
-        vec3 eh = h - e; // eye-to-hitpoint vector.
-
-        float alpha = intersect_unit_sphere(e, eh);
-
-        if (alpha == INVALID)
-        {
-            discard;
-        }
-
-        // This is the point where the ray and the unit sphere intersect in the "unit sphere" coordinate system.
-        // It is normalized since it is on the unit sphere.
-        vec3 sphere_hit = e + alpha * eh;
-
-        // Fix depth.
-
-        vec4 projection = projection_matrix * inverse(to_obj_space) * vec4(sphere_hit, 1);
-
-        gl_FragDepth = 0.5 + 0.5 *  (projection.z / projection.w);
-
-        // Render sphere from sphere envelope.
-        vec3 k_material = fs_in.color;
-
-        // NOTE: We do our geometric calculations in the "MV" coordinate system.
-
-        vec3 mv_eye = vec3(0, 0, 0);
-        vec3 mv_surface = fs_in.mv_surface;
-        vec3 mv_surface_normal = normalize((transpose(to_obj_space) * vec4(sphere_hit, 1)).xyz);
-        vec3 mv_viewer_direction = normalize(mv_eye-mv_surface);
-
-        vec3 m_lightsource1_direction = normalize(vec3(+1, 1, 1));
-        vec3 mv_lightsource1_direction = normalize((transposed_inverse_view_matrix * vec4(m_lightsource1_direction, 0)).xyz);
-        vec3 mv_lightsource1_reflection_direction = 2 * dot(mv_lightsource1_direction, mv_surface_normal) * mv_surface_normal - mv_lightsource1_direction;
-
-        //vec3 m_lightsource2_direction = normalize(vec3(-1, 1, 1));
-        //vec3 mv_lightsource2_direction = normalize((transposed_inverse_view_matrix * vec4(m_lightsource2_direction, 0)).xyz);
-        //vec3 mv_lightsource2_reflection_direction = 2 * dot(mv_lightsource2_direction, mv_surface_normal) * mv_surface_normal - mv_lightsource2_direction;
-
-        float contrib_d1 = max(0.0, dot(mv_lightsource1_direction, mv_surface_normal));
-        float contrib_s1 = pow(max(0.0, dot(mv_lightsource1_reflection_direction, mv_viewer_direction)), phong_alpha);
-
-        //float contrib_d2 = max(0.0, dot(mv_lightsource2_direction, mv_surface_normal));
-        //float contrib_s2 = pow(max(0.0, dot(mv_lightsource2_reflection_direction, mv_viewer_direction)), alpha);
-
-        vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1);
-        //vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1 + id2 * contrib_d2 + is2 * contrib_s2);
-
-        fragment_color = vec4(phong_color, 1.0);
+        //fragment_color = vec4(1, 1, 0, 1); return;
+        discard;
     }
-    else
+
+    // This is the point where the ray and the object intersect in the "object" coordinate system.
+    // It is normalized since it is on the unit sphere.
+
+    vec3 object_hit = object_eye + alpha * object_eye_to_impostor_hit_vector;
+
+    if (fs_in.object_type == 1 && abs(object_hit.z) > 0.5)
     {
-        // The triangle is part of a cylinder impostor hull.
-
-        mat4 inverse_placement_matrix = mat4(
-            fs_in.a_inverse_placement_matrix[0][0], fs_in.a_inverse_placement_matrix[0][1], fs_in.a_inverse_placement_matrix[0][2], 0,
-            fs_in.a_inverse_placement_matrix[1][0], fs_in.a_inverse_placement_matrix[1][1], fs_in.a_inverse_placement_matrix[1][2], 0,
-            fs_in.a_inverse_placement_matrix[2][0], fs_in.a_inverse_placement_matrix[2][1], fs_in.a_inverse_placement_matrix[2][2], 0,
-            fs_in.a_inverse_placement_matrix[3][0], fs_in.a_inverse_placement_matrix[3][1], fs_in.a_inverse_placement_matrix[3][2], 1
-        );
-
-        mat4 to_obj_space = inverse_placement_matrix * inverse_view_model_matrix;
-
-        vec3 h = (to_obj_space * vec4(fs_in.mv_surface, 1)).xyz;
-        vec3 e = (to_obj_space * vec4(0, 0, 0, 1)).xyz;
-
-        vec3 eh = h - e; // eye-to-hitpoint vector.
-
-        float alpha = intersect_unit_cylinder(e.xy, eh.xy);
-
-        if (alpha == INVALID)
-        {
-            //fragment_color = vec4(1, 0, 0, 1);
-            //return;
-            discard;
-        }
-
-        // This is the point where the ray and the unit cylinder intersect in the "unit cylinder" coordinate system.
-        // Its xy coordinates are normalized since they are a point on the unit cylinder.
-        vec3 cylinder_hit = e + alpha * eh;
-
-        if (abs(cylinder_hit.z) > 0.5)
-        {
-            // The cylinder is hit, but outside its z range [-0.5 .. +0.5].
-            //fragment_color = vec4(0.0, 1.0, 1.0, 1.0);
-            //return;
-            discard;
-        }
-
-        // Fix depth.
-
-        vec4 projection = projection_matrix * inverse(to_obj_space) * vec4(cylinder_hit, 1);
-
-        gl_FragDepth = 0.5 + 0.5 *  (projection.z / projection.w);
-
-        // Render sphere from sphere envelope.
-        vec3 k_material = fs_in.color;
-
-        // NOTE: We do our geometric calculations in the "MV" coordinate system.
-
-        vec3 mv_eye = vec3(0, 0, 0);
-        vec3 mv_surface = fs_in.mv_surface;
-        vec3 mv_surface_normal = normalize((transpose(to_obj_space) * vec4(cylinder_hit, 1)).xyz);
-        vec3 mv_viewer_direction = normalize(mv_eye-mv_surface);
-
-        vec3 m_lightsource1_direction = normalize(vec3(+1, 1, 1));
-        vec3 mv_lightsource1_direction = normalize((transposed_inverse_view_matrix * vec4(m_lightsource1_direction, 0)).xyz);
-        vec3 mv_lightsource1_reflection_direction = 2 * dot(mv_lightsource1_direction, mv_surface_normal) * mv_surface_normal - mv_lightsource1_direction;
-
-        //vec3 m_lightsource2_direction = normalize(vec3(-1, 1, 1));
-        //vec3 mv_lightsource2_direction = normalize((transposed_inverse_view_matrix * vec4(m_lightsource2_direction, 0)).xyz);
-        //vec3 mv_lightsource2_reflection_direction = 2 * dot(mv_lightsource2_direction, mv_surface_normal) * mv_surface_normal - mv_lightsource2_direction;
-
-        float contrib_d1 = max(0.0, dot(mv_lightsource1_direction, mv_surface_normal));
-        float contrib_s1 = pow(max(0.0, dot(mv_lightsource1_reflection_direction, mv_viewer_direction)), phong_alpha);
-
-        //float contrib_d2 = max(0.0, dot(mv_lightsource2_direction, mv_surface_normal));
-        //float contrib_s2 = pow(max(0.0, dot(mv_lightsource2_reflection_direction, mv_viewer_direction)), alpha);
-
-        vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1);
-        //vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1 + id2 * contrib_d2 + is2 * contrib_s2);
-
-        fragment_color = vec4(phong_color, 1.0);
+        //fragment_color = vec4(1, 1, 0, 1); return;
+        discard;
     }
+
+    // Fix fragment depth. We replace the depth of the hull with the depth of the actual hitpoint
+    // of the enclosed object.
+
+    vec4 projection = fs_in.object_to_projection_space_matrix * vec4(object_hit, 1);
+
+    gl_FragDepth = 0.5 - 0.5 *  (projection.z / projection.w);
+
+    vec3 object_normal = (fs_in.object_type == 0) ? object_hit : vec3(object_hit.xy, 0);
+
+    // Determine fragment color using Phong shading.
+
+    vec3 k_material = fs_in.color;
+
+    // NOTE: We do our geometric calculations in the "MV" coordinate system.
+
+    vec3 mv_eye = vec3(0, 0, 0);
+    vec3 mv_surface = fs_in.mv_surface;
+    vec3 mv_surface_normal = normalize((transpose(fs_in.modelview_to_object_space_matrix) * vec4(object_normal, 0)).xyz);
+    vec3 mv_viewer_direction = normalize(mv_eye - mv_surface);
+
+    vec3 mv_lightsource1_direction = normalize((transposed_inverse_view_matrix * vec4(m_lightsource1_direction, 0)).xyz);
+    vec3 mv_lightsource1_reflection_direction = 2 * dot(mv_lightsource1_direction, mv_surface_normal) * mv_surface_normal - mv_lightsource1_direction;
+
+    float contrib_d1 = max(0.0, dot(mv_lightsource1_direction, mv_surface_normal));
+    float contrib_s1 = pow(max(0.0, dot(mv_lightsource1_reflection_direction, mv_viewer_direction)), phong_alpha);
+
+    vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1);
+
+    fragment_color = vec4(phong_color, 1.0);
 }

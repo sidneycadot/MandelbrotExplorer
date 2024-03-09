@@ -11,6 +11,7 @@ layout (location = 5) in vec4 a_inverse_placement_matrix_row3;
 uniform mat4 projection_view_model_matrix;
 uniform mat4 view_model_matrix;
 uniform mat4 transposed_inverse_view_model_matrix;
+uniform mat4 projection_matrix;
 
 uniform uint cut_mode;
 uniform uint unit_cells_per_dimension;
@@ -20,9 +21,9 @@ uniform uint color_mode;
 out VS_OUT {
     vec3 mv_surface;
     vec3 color;
-    flat ivec3 a_lattice_position;
-    flat ivec3 a_lattice_delta;
-    flat mat4x3 a_inverse_placement_matrix;
+    flat mat4x4 modelview_to_object_space_matrix;
+    flat mat4x4 object_to_projection_space_matrix;
+    flat int object_type; // 0 == sphere, 1 == cylinder.
 } vs_out;
 
 const float UNIT_CELL_SIZE = 4.0;
@@ -71,8 +72,6 @@ void main()
 
     vec3 lattice_position = unit_cell_displacement_vector + a_lattice_position;
 
-    vec3 vertex_position = unit_cell_displacement_vector + a_vertex;
-
     float carbon_cut_distance = crystal_lattice_surface_cut_distance(lattice_position);
 
     bool render_flag = true;
@@ -95,25 +94,32 @@ void main()
     }
     else
     {
+        vec3 vertex_position = unit_cell_displacement_vector + a_vertex;
+
         gl_Position = projection_view_model_matrix * vec4(vertex_position, 1.0);
         vs_out.mv_surface = (view_model_matrix * vec4(vertex_position, 1.0)).xyz;
 
-        vs_out.a_lattice_position = a_lattice_position;
-        vs_out.a_lattice_delta = a_lattice_delta;
+        vs_out.object_type = (a_lattice_delta.x == 0) ? 0 : 1;
 
-        mat4 inverse_displacement = mat4(
+        mat4 inverse_displacement_matrix = mat4(
             1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0,
             -unit_cell_displacement_vector.x, -unit_cell_displacement_vector.y, -unit_cell_displacement_vector.z, 1
         );
 
-        vs_out.a_inverse_placement_matrix = mat4x3(
-            a_inverse_placement_matrix_row1[0], a_inverse_placement_matrix_row2[0], a_inverse_placement_matrix_row3[0],
-            a_inverse_placement_matrix_row1[1], a_inverse_placement_matrix_row2[1], a_inverse_placement_matrix_row3[1],
-            a_inverse_placement_matrix_row1[2], a_inverse_placement_matrix_row2[2], a_inverse_placement_matrix_row3[2],
-            a_inverse_placement_matrix_row1[3], a_inverse_placement_matrix_row2[3], a_inverse_placement_matrix_row3[3]
-        ) * inverse_displacement;
+        mat4 inverse_placement_matrix = mat4x4(
+            a_inverse_placement_matrix_row1[0], a_inverse_placement_matrix_row2[0], a_inverse_placement_matrix_row3[0], 0,
+            a_inverse_placement_matrix_row1[1], a_inverse_placement_matrix_row2[1], a_inverse_placement_matrix_row3[1], 0,
+            a_inverse_placement_matrix_row1[2], a_inverse_placement_matrix_row2[2], a_inverse_placement_matrix_row3[2], 0,
+            a_inverse_placement_matrix_row1[3], a_inverse_placement_matrix_row2[3], a_inverse_placement_matrix_row3[3], 1
+        );
+
+        vs_out.modelview_to_object_space_matrix = inverse_placement_matrix * inverse_displacement_matrix * transpose(transposed_inverse_view_model_matrix);
+
+        vs_out.object_to_projection_space_matrix = projection_matrix * inverse(vs_out.modelview_to_object_space_matrix);
+
+        // Determine the color of the edge.
 
         switch(color_mode)
         {
@@ -123,6 +129,15 @@ void main()
                 {
                     // Carbon atom (sphere).
                     vs_out.color = 0.2 + 0.9 * a_lattice_position / 3;
+
+                    //if ((a_lattice_position.x + a_lattice_position.y + a_lattice_position.z) % 4 == 0)
+                    //{
+                    //    vs_out.color = vec3(1.0, 0.0, 0.0);
+                    //}
+                    //else
+                    //{
+                    //    vs_out.color = vec3(1.0, 1.0, 0.0);
+                    //}
                 }
                 else
                 {
