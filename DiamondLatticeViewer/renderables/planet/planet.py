@@ -1,22 +1,26 @@
 """This module implements the RenderablePlanet class."""
 
+from typing import Optional
 import os
+import ctypes
 
 from PIL import Image
 
 import numpy as np
 
-from OpenGL.GL import *
-
+from utilities.opengl_imports import *
 from utilities.matrices import apply_transform_to_vertices
-from renderables.renderable import Renderable
 from utilities.opengl_utilities import create_opengl_program
 from utilities.geometry import make_unit_sphere_triangles
+
+from renderables.renderable import Renderable
 
 
 class RenderablePlanet(Renderable):
 
-    def __init__(self, m_xform=None):
+    def __init__(self, m_xform=None, name: Optional[str] = None):
+
+        super().__init__(name)
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "planet")
 

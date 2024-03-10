@@ -2,17 +2,18 @@
 
 import itertools
 import os
+from typing import Optional
+import ctypes
 
 import numpy as np
 
-from OpenGL.GL import *
-
+from utilities.opengl_imports import *
 from utilities.matrices import translate, scale, apply_transform_to_vertices
-from renderables.renderable import Renderable
 from utilities.opengl_utilities import create_opengl_program
 from utilities.geometry import (make_unit_sphere_triangles, make_cylinder_triangles,
                                 make_cylinder_placement_transform)
 
+from renderables.renderable import Renderable
 
 def in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
     """Return if a given integer (ix, iy, iz) coordinate is in the diamond lattice."""
@@ -23,7 +24,9 @@ class RenderableDiamondLattice(Renderable):
 
     """A Renderable that renders a diamond crystal lattice using sphere and cylinder impostors."""
 
-    def __init__(self):
+    def __init__(self, name: Optional[str] = None):
+
+        super().__init__(name)
 
         self.color_mode = 1
         self.cut_mode = 0

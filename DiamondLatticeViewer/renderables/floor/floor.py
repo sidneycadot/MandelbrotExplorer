@@ -1,18 +1,21 @@
 """This module implements the RenderableFloor class."""
 
+from typing import Optional
 import os
 
 import numpy as np
 
-from OpenGL.GL import *
 
-from renderables.renderable import Renderable
+from utilities.opengl_imports import *
 from utilities.opengl_utilities import create_opengl_program
 
+from renderables.renderable import Renderable
 
 class RenderableFloor(Renderable):
 
-    def __init__(self, h_size: float, v_size: float):
+    def __init__(self, h_size: float, v_size: float, name: Optional[str] = None):
+
+        super().__init__(name)
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "floor")
 

@@ -1,24 +1,27 @@
-"""This module implements the RenderableCylinderImpostor class."""
+"""This module implements the RenderableSphereImpostor class."""
 
 import os
+import ctypes
+from typing import Optional
 
 from PIL import Image
 
 import numpy as np
 
-from OpenGL.GL import *
-
+from utilities.opengl_imports import *
 from utilities.matrices import apply_transform_to_vertices
 from renderables.renderable import Renderable
 from utilities.opengl_utilities import create_opengl_program
-from utilities.geometry import make_cylinder_triangles
+from utilities.geometry import make_unit_sphere_triangles
 
 
-class RenderableCylinderImpostor(Renderable):
+class RenderableSphereImpostor(Renderable):
 
-    def __init__(self, m_xform=None):
+    def __init__(self, texture_filename: str, m_xform=None, name: Optional[str] = None):
 
-        shader_source_path = os.path.join(os.path.dirname(__file__), "cylinder_impostor")
+        super().__init__(name)
+
+        shader_source_path = os.path.join(os.path.dirname(__file__), "sphere_impostor")
 
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
@@ -40,7 +43,7 @@ class RenderableCylinderImpostor(Renderable):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        texture_image_path = os.path.join(os.path.dirname(__file__), "earth.png")
+        texture_image_path = os.path.join(os.path.dirname(__file__), texture_filename)
 
         with Image.open(texture_image_path) as im:
             image = np.array(im)
@@ -48,13 +51,13 @@ class RenderableCylinderImpostor(Renderable):
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[1], image.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
         glGenerateMipmap(GL_TEXTURE_2D)
 
-        triangles = make_cylinder_triangles(subdivision_count=6, caps=True)
+        triangles = make_unit_sphere_triangles(recursion_level=0)
 
         print("triangles:", len(triangles))
 
         triangle_vertices = np.array(triangles).reshape(-1, 3)
 
-        triangle_vertices = np.multiply(triangle_vertices, (1.25, 1.25, 1.05))  # Oversize the impostor.
+        triangle_vertices = np.multiply(triangle_vertices, 1.3)  # Oversize the impostor.
 
         triangle_vertices = apply_transform_to_vertices(m_xform, triangle_vertices)
 
@@ -66,7 +69,7 @@ class RenderableCylinderImpostor(Renderable):
 
         vbo_data = np.empty(dtype=vbo_dtype, shape=len(triangle_vertices))
 
-        vbo_data["a_vertex"] = triangle_vertices  # Oversize the impostor.
+        vbo_data["a_vertex"] = triangle_vertices
 
         self._num_points = len(vbo_data)
 
@@ -130,5 +133,5 @@ class RenderableCylinderImpostor(Renderable):
 
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glBindVertexArray(self._vao)
-        glEnable(GL_CULL_FACE)
+        glEnable(GL_CULL_FACE);
         glDrawArrays(GL_TRIANGLES, 0, self._num_points)
