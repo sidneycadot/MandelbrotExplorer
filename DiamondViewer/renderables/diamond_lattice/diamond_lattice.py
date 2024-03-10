@@ -1,4 +1,4 @@
-"""This module implements the RenderableDiamondImpostor class."""
+"""This module implements the RenderableDiamondLattice class."""
 
 import itertools
 import os
@@ -19,7 +19,9 @@ def in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
     return (ix % 2 == iy % 2 == iz % 2) and (ix + iy + iz) % 4 < 2
 
 
-class RenderableDiamondImpostor(Renderable):
+class RenderableDiamondLattice(Renderable):
+
+    """A Renderable that renders a diamond crystal lattice using sphere and cylinder impostors."""
 
     def __init__(self):
 
@@ -27,8 +29,9 @@ class RenderableDiamondImpostor(Renderable):
         self.cut_mode = 0
         self.unit_cells_per_dimension = 5
         self.crystal_side_length = 16.0
+        self.impostor_mode = 0
 
-        shader_source_path = os.path.join(os.path.dirname(__file__), "diamond_impostor")
+        shader_source_path = os.path.join(os.path.dirname(__file__), "diamond_lattice")
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
         self._projection_matrix_location = glGetUniformLocation(self._shader_program, "projection_matrix")
@@ -42,6 +45,7 @@ class RenderableDiamondImpostor(Renderable):
         self._crystal_side_length_location = glGetUniformLocation(self._shader_program, "crystal_side_length")
         self._cut_mode_location = glGetUniformLocation(self._shader_program, "cut_mode")
         self._color_mode_location = glGetUniformLocation(self._shader_program, "color_mode")
+        self._impostor_mode_location = glGetUniformLocation(self._shader_program, "impostor_mode")
 
         vbo_dtype = np.dtype([
             ("a_vertex", np.float32, 3),          # Triangle vertex
@@ -70,7 +74,7 @@ class RenderableDiamondImpostor(Renderable):
                     placement_matrix = translate((ix, iy, iz)) @ scale(0.3)
                     inverse_placement_matrix = np.linalg.inv(placement_matrix)
 
-                    impostor_hull_matrix = placement_matrix @ scale(1.3)
+                    impostor_hull_matrix = placement_matrix @ scale(1.26)
 
                     impostor_triangle_vertices = apply_transform_to_vertices(impostor_hull_matrix, sphere_triangle_vertices)
 
@@ -101,7 +105,7 @@ class RenderableDiamondImpostor(Renderable):
                             placement_matrix = make_cylinder_placement_transform(p1, p2, 0.10)
                             inverse_placement_matrix = np.linalg.inv(placement_matrix)
 
-                            impostor_hull_matrix = placement_matrix @ scale(1.1)
+                            impostor_hull_matrix = placement_matrix @ scale((1.1, 1.1, 1.01))
 
                             current_bond_triangle_vertices = apply_transform_to_vertices(impostor_hull_matrix, cylinder_triangle_vertices)
 
@@ -206,6 +210,7 @@ class RenderableDiamondImpostor(Renderable):
             glUniform1ui(self._color_mode_location, self.color_mode)
             glUniform1f(self._crystal_side_length_location, self.crystal_side_length)
             glUniform1ui(self._cut_mode_location, self.cut_mode)
+            glUniform1ui(self._impostor_mode_location, self.impostor_mode)
 
             glEnable(GL_CULL_FACE)
             glBindVertexArray(self._vao)

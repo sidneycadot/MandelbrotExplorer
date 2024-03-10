@@ -8,4 +8,4 @@ from .planet.planet import RenderablePlanet
 
 from .sphere_impostor.sphere_impostor import RenderableSphereImpostor
 from .cylinder_impostor.cylinder_impostor import RenderableCylinderImpostor
-from .diamond_impostor.diamond_impostor import RenderableDiamondImpostor
+from .diamond_lattice.diamond_lattice import RenderableDiamondLattice

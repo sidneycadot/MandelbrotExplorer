@@ -3,6 +3,7 @@
 
 uniform mat4 transposed_inverse_view_matrix;
 uniform mat4 inverse_view_model_matrix;
+uniform uint impostor_mode;
 
 in VS_OUT {
     vec3 mv_surface;
@@ -77,8 +78,15 @@ void main()
 
     if (alpha < 0)
     {
-        //fragment_color = vec4(1, 1, 0, 1); return;
-        discard;
+        if (impostor_mode == 0)
+        {
+            discard;
+        }
+        else
+        {
+            fragment_color = vec4(1, 1, 0, 1);
+            return;
+        }
     }
 
     // This is the point where the ray and the object intersect in the "object" coordinate system.
@@ -88,8 +96,15 @@ void main()
 
     if (fs_in.object_type == 1 && abs(object_hit.z) > 0.5)
     {
-        //fragment_color = vec4(1, 1, 0, 1); return;
-        discard;
+        if (impostor_mode == 0)
+        {
+            discard;
+        }
+        else
+        {
+            fragment_color = vec4(0, 1, 1, 1);
+            return;
+        }
     }
 
     // Fix fragment depth. We replace the depth of the hull with the depth of the actual hitpoint

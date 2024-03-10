@@ -9,7 +9,7 @@ from utilities.matrices import translate, rotate, scale, perspective_projection
 
 from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,
                          RenderableSphereImpostor, RenderableCylinderImpostor,
-                         RenderableDiamondImpostor)
+                         RenderableDiamondLattice)
 
 from utilities.world import World
 
@@ -148,7 +148,7 @@ class Application:
 
         draw_diamond_impostor = True
         if draw_diamond_impostor:
-            self.diamond_model = RenderableDiamondImpostor()
+            self.diamond_model = RenderableDiamondLattice()
 
             scene.add_model(
                 RenderableModelTransformer(
@@ -243,6 +243,9 @@ class Application:
                 case glfw.KEY_C:
                     if self.diamond_model is not None:
                         self.diamond_model.color_mode = (self.diamond_model.color_mode + 1) % 2
+                case glfw.KEY_I:
+                    if self.diamond_model is not None:
+                        self.diamond_model.impostor_mode = (self.diamond_model.impostor_mode + 1) % 2
                 case glfw.KEY_RIGHT_BRACKET:
                     if self.diamond_model is not None:
                         if (mods & glfw.MOD_SHIFT) != 0:
