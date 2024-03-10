@@ -23,7 +23,7 @@ class RenderableDiamondImpostor(Renderable):
 
     def __init__(self):
 
-        self.color_mode = 0
+        self.color_mode = 1
         self.cut_mode = 0
         self.unit_cells_per_dimension = 5
         self.crystal_side_length = 16.0
