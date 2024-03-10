@@ -25,5 +25,4 @@ class RenderableScene(Renderable):
             model.render(m_projection, m_view, m_model)
 
     def children(self):
-        # Return a copy, to prevent accidental modification.
-        return list(self._models)
+        yield from self._models

@@ -24,4 +24,4 @@ class RenderableModelTransformer(Renderable):
         self._model.render(m_projection, m_view, m_model @ m_func)
 
     def children(self):
-        return [self._model]
+        yield self._model

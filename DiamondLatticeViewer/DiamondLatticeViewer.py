@@ -111,6 +111,7 @@ class Application:
     def __init__(self):
         self.render_distance = 60.0
         self._diamond_model = None
+        self._world = None
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int, fullscreen_flag: bool):
@@ -154,14 +155,16 @@ class Application:
 
         window = Application.create_glfw_window(4, 1, True)
 
+        glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_HIDDEN)
+
         glfw.set_framebuffer_size_callback(window, lambda *args: Application.framebuffer_size_callback(*args))
         glfw.set_key_callback(window, lambda *args: self.key_callback(*args))
 
         glfw.make_context_current(window)
 
-        world = World()
+        self._world = world = World()
 
-        scene = make_scene(world)
+        scene = make_scene(self._world)
 
         self._diamond_model = scene.find("diamond_lattice")
 
@@ -234,6 +237,22 @@ class Application:
 
         if action in (glfw.PRESS, glfw.REPEAT):
             match key:
+                case glfw.KEY_SPACE:
+                    rtf = self._world.get_realtime_factor()
+                    rtf = 1.0 if rtf == 0.0 else 0.0
+                    self._world.set_realtime_factor(rtf)
+                case glfw.KEY_COMMA:
+                    rtf = self._world.get_realtime_factor()
+                    rtf = 0.5 * rtf
+                    self._world.set_realtime_factor(rtf)
+                case glfw.KEY_PERIOD:
+                    rtf = self._world.get_realtime_factor()
+                    rtf = 2.0 * rtf
+                    self._world.set_realtime_factor(rtf)
+                case glfw.KEY_SLASH:
+                    rtf = self._world.get_realtime_factor()
+                    rtf = -rtf
+                    self._world.set_realtime_factor(rtf)
                 case glfw.KEY_ESCAPE:
                     glfw.set_window_should_close(window, True)
                 case glfw.KEY_0:
