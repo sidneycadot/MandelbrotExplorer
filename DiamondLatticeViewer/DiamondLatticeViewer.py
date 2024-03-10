@@ -171,7 +171,7 @@ class Application:
         # Prepare loop.
 
         frame_counter = 0
-        t_prev = None
+        t_previous_wallclock = None
 
         glfw.swap_interval(1)
 
@@ -190,13 +190,15 @@ class Application:
 
         while not glfw.window_should_close(window):
 
-            t_now = glfw.get_time()
-
+            t_wallclock = glfw.get_time()
             if frame_counter % num_report_frames == 0:
-                if t_prev is not None:
-                    frame_duration = (t_now - t_prev) / num_report_frames
+                if t_previous_wallclock is not None:
+                    frame_duration = (t_wallclock - t_previous_wallclock) / num_report_frames
                     print("@@ {:20.4f} ms per frame".format(frame_duration * 1000.0))
-                t_prev = t_now
+                t_previous_wallclock = t_wallclock
+
+            # Sample world time. All queries to world.time() will be identical.
+            world.sample_time()
 
             # Make view matrix.
 
