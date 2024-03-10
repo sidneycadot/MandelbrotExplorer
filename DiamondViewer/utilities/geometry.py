@@ -2,11 +2,13 @@
 
 import numpy as np
 
+from .matrices import scale, rotate, translate
+
 
 def normalize(v) -> np.ndarray:
     """Normalize a vector."""
-    vec = np.asarray(v)
-    return vec / np.linalg.norm(vec)
+    v = np.asarray(v)
+    return v / np.linalg.norm(v)
 
 
 def _make_unit_sphere_triangles_recursive(triangle, recursion_level: int) -> list:
@@ -95,10 +97,11 @@ def make_unit_sphere_triangles(recursion_level: int):
     return triangles
 
 
-def make_cylinder_triangles(z_lo: float, z_hi: float, subdivision_count: int, capped: bool):
+def make_cylinder_triangles(subdivision_count: int, capped: bool):
+    """Make a triangularisation of a unit cylinder."""
 
-    if not (z_lo < z_hi):
-        raise ValueError()
+    z_lo = -0.5
+    z_hi = +0.5
 
     triangles = []
 
@@ -128,3 +131,42 @@ def make_cylinder_triangles(z_lo: float, z_hi: float, subdivision_count: int, ca
             triangles.append(((0, 0, z_lo), (x1, y1, z_lo), (x0, y0, z_lo)))
 
     return triangles
+
+
+def make_cylinder_placement_transform(p1, p2, diameter) -> np.ndarray:
+    """Return a cylinder placement transformation matrix.
+
+    Assuming a unit cylinder with r=1 and extending from z = -0.5 to +0.5, scale its diameter
+    and place it such that it extends from p1 to p2.
+    """
+
+    p1 = np.asarray(p1)
+    p2 = np.asarray(p2)
+
+    p_vector = p2 - p1
+
+    # Note: the np.cross() method triggers a code reachability analysis bug in PyCharm,
+    # leading to some spurious GUI warnings.
+
+    u = np.array((0, 0, 1))
+    v = normalize(p_vector)
+    rotation_angle = np.arccos(np.dot(u, v))
+    rotation_vector = np.cross(u, v)
+
+    if np.linalg.norm(rotation_vector) == 0:  # u is precisely parallel to v.
+        if rotation_angle > 0:
+            orientation_matrix = scale(+1.0)  # Identity matrix.
+        else:
+            orientation_matrix = scale(-1.0)
+    else:
+        orientation_matrix = rotate(rotation_vector, rotation_angle)
+
+    # Apply a translation, scaling, rotation, and translation.
+    placement_matrix = (
+            translate(p1) @
+            orientation_matrix @
+            scale((diameter, diameter, np.linalg.norm(p_vector))) @
+            translate((0, 0, 0.5))
+    )
+
+    return placement_matrix

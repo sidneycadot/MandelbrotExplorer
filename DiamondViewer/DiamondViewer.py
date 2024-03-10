@@ -5,13 +5,13 @@ import numpy as np
 import glfw
 from OpenGL.GL import *
 
-from matrices import translate, rotate, scale, perspective_projection
+from utilities.matrices import translate, rotate, scale, perspective_projection
 
 from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,
                          RenderableSphereImpostor, RenderableCylinderImpostor,
                          RenderableDiamondImpostor)
 
-from world import World
+from utilities.world import World
 
 
 class Application:
@@ -42,9 +42,9 @@ class Application:
             for mode in modes:
                 print("mode:", mode.size, mode.bits, mode.refresh_rate)
 
-            window = glfw.create_window(3840, 2160, "DrawScene", monitor, None)
+            window = glfw.create_window(3840, 2160, "DiamondViewer", monitor, None)
         else:
-            window = glfw.create_window(640, 480, "DrawScene", None, None)
+            window = glfw.create_window(640, 480, "DiamondViewer", None, None)
 
         if not window:
             raise RuntimeError("Unable to create window using GLFW.")

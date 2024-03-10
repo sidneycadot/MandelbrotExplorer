@@ -8,10 +8,10 @@ import numpy as np
 
 from OpenGL.GL import *
 
-from matrices import apply_transform_to_vertices
+from utilities.matrices import apply_transform_to_vertices
 from renderables.renderable import Renderable
-from renderables.opengl_utilities import create_opengl_program
-from renderables.geometry import make_unit_sphere_triangles
+from utilities.opengl_utilities import create_opengl_program
+from utilities.geometry import make_unit_sphere_triangles
 
 
 class RenderablePlanet(Renderable):

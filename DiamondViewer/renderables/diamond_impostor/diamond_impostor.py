@@ -7,36 +7,16 @@ import numpy as np
 
 from OpenGL.GL import *
 
-from matrices import translate, apply_transform_to_vertices, scale, rotate, apply_transform_to_normals
+from utilities.matrices import translate, scale, apply_transform_to_vertices
 from renderables.renderable import Renderable
-from renderables.opengl_utilities import create_opengl_program
-from renderables.geometry import make_unit_sphere_triangles, make_cylinder_triangles, normalize
-
-
-def make_cylinder_placement_transform(p1, p2, diameter):
-
-    up_vector = np.array((0, 0, 1))
-    axis_vector = normalize(p2 - p1)
-
-    rotation_vector = np.cross(up_vector, axis_vector)
-    rotation_angle = np.arccos(np.dot(up_vector, axis_vector))
-
-    if np.linalg.norm(rotation_vector) == 0:  # pvec is precisely parallel to upvec.
-        if rotation_angle > 0:
-            m_rot = scale(+1.0)  # Identity matrix.
-        else:
-            m_rot = scale(-1.0)
-    else:
-        m_rot = rotate(rotation_vector, rotation_angle)
-
-    # Get the requested cylinder from a unit cylinder by applying a translation, scaling, rotation, and translation.
-    placement_matrix = translate(p1) @ m_rot @ scale((diameter, diameter, np.linalg.norm(p2 - p1))) @ translate((0, 0, 0.5))
-
-    return placement_matrix
+from utilities.opengl_utilities import create_opengl_program
+from utilities.geometry import (make_unit_sphere_triangles, make_cylinder_triangles,
+                                make_cylinder_placement_transform)
 
 
 def in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
-    return (ix - iy) % 2 == 0 and (ix - iz) % 2 == 0 and (ix + iy + iz) % 4 < 2
+    """Return if a given integer (ix, iy, iz) coordinate is in the diamond lattice."""
+    return (ix % 2 == iy % 2 == iz % 2) and (ix + iy + iz) % 4 < 2
 
 
 class RenderableDiamondImpostor(Renderable):
@@ -67,15 +47,17 @@ class RenderableDiamondImpostor(Renderable):
             ("a_vertex", np.float32, 3),          # Triangle vertex
             ("a_lattice_position", np.int32, 3),  # Lattice position
             ("a_lattice_delta", np.int32, 3),     # Lattice delta (zero vector for sphere, nonzero vector for cylinder)
-            ("inverse_placement_matrix_row1", np.float32, 4),  # Transform MV object coordinates to object coordinates.
-            ("inverse_placement_matrix_row2", np.float32, 4),  # Transform MV object coordinates to object coordinates.
-            ("inverse_placement_matrix_row3", np.float32, 4)   # Transform MV object coordinates to object coordinates.
+            ("inverse_placement_matrix_row1", np.float32, 4),  # Row 1 of inverse placement matrix.
+            ("inverse_placement_matrix_row2", np.float32, 4),  # Row 2 of inverse placement matrix.
+            ("inverse_placement_matrix_row3", np.float32, 4)   # Row 3 of inverse placement matrix.
         ])
+
+        # Make sphere and cylinder triangle vertices.
 
         sphere_triangles = make_unit_sphere_triangles(recursion_level=0)
         sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
 
-        cylinder_triangles = make_cylinder_triangles(-0.5, +0.5, subdivision_count=6, capped=False)
+        cylinder_triangles = make_cylinder_triangles(subdivision_count=6, capped=False)
         cylinder_triangle_vertices = np.array(cylinder_triangles).reshape(-1, 3)
 
         vbo_data_list = []
