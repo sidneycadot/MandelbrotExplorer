@@ -190,7 +190,7 @@ class Application:
 
         while not glfw.window_should_close(window):
 
-            t_now = world.sample_time()
+            t_now = glfw.get_time()
 
             if frame_counter % num_report_frames == 0:
                 if t_prev is not None:
