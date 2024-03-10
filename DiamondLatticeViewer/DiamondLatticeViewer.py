@@ -271,7 +271,7 @@ class Application:
                         self._diamond_model.cut_mode = 3 if self._diamond_model.cut_mode != 3 else 0
                 case glfw.KEY_C:
                     if self._diamond_model is not None:
-                        self._diamond_model.color_mode = (self._diamond_model.color_mode + 1) % 2
+                        self._diamond_model.color_mode = (self._diamond_model.color_mode + 1) % 3
                 case glfw.KEY_I:
                     if self._diamond_model is not None:
                         self._diamond_model.impostor_mode = (self._diamond_model.impostor_mode + 1) % 2

@@ -28,7 +28,7 @@ class RenderableDiamondLattice(Renderable):
 
         super().__init__(name)
 
-        self.color_mode = 1
+        self.color_mode = 0
         self.cut_mode = 0
         self.unit_cells_per_dimension = 5
         self.crystal_side_length = 16.0
@@ -218,4 +218,3 @@ class RenderableDiamondLattice(Renderable):
             glEnable(GL_CULL_FACE)
             glBindVertexArray(self._vao)
             glDrawArraysInstanced(GL_TRIANGLES, 0, self._num_points, self.unit_cells_per_dimension ** 3)
-            glDisable(GL_CULL_FACE)

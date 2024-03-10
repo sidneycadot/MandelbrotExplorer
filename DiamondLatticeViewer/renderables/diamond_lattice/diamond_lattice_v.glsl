@@ -119,11 +119,31 @@ void main()
 
         vs_out.object_to_projection_space_matrix = projection_matrix * inverse(vs_out.modelview_to_object_space_matrix);
 
-        // Determine the color of the edge.
+        // Determine the color of the triangle.
 
-        switch(color_mode)
+        switch (color_mode)
         {
-            case 0:
+            case 0: // Color white (possible colored plane for cuts).
+            {
+                if (a_lattice_delta.x == 0)
+                {
+                    // Carbon atom (sphere).
+                    switch (cut_mode)
+                    {
+                        case 1: vs_out.color = (carbon_cut_distance > -1.5) ? vec3(1.0, 0.6, 0.6) : vec3(1.0, 1.0, 1.0); break;
+                        case 2: vs_out.color = (carbon_cut_distance > -1.0) ? vec3(0.6, 1.0, 0.6) : vec3(1.0, 1.0, 1.0); break;
+                        case 3: vs_out.color = (carbon_cut_distance > -1.9) ? vec3(0.6, 0.6, 1.0) : vec3(1.0, 1.0, 1.0); break;
+                        default : vs_out.color = vec3(1.0, 1.0, 1.0); break;
+                    }
+                }
+                else
+                {
+                    // Carbon-carbon bond (cylinder).
+                    vs_out.color = vec3(1.0, 1.0, 1.0);
+                }
+                break;
+            }
+            case 1: // Color according to position in the grid
             {
                 if (a_lattice_delta.x == 0)
                 {
@@ -146,17 +166,18 @@ void main()
                 }
                 break;
             }
-            case 1:
+            case 2: // Color according to position in the grid
             {
                 if (a_lattice_delta.x == 0)
                 {
                     // Carbon atom (sphere).
-                    switch (cut_mode)
+                    if ((a_lattice_position.x + a_lattice_position.y + a_lattice_position.z) % 4 == 0)
                     {
-                        case 1: vs_out.color = (carbon_cut_distance > -1.5) ? vec3(1.0, 0.6, 0.6) : vec3(1.0, 1.0, 1.0); break;
-                        case 2: vs_out.color = (carbon_cut_distance > -1.0) ? vec3(0.6, 1.0, 0.6) : vec3(1.0, 1.0, 1.0); break;
-                        case 3: vs_out.color = (carbon_cut_distance > -1.9) ? vec3(0.6, 0.6, 1.0) : vec3(1.0, 1.0, 1.0); break;
-                        default : vs_out.color = vec3(1.0, 1.0, 1.0); break;
+                        vs_out.color = vec3(1.0, 0.0, 0.0);
+                    }
+                    else
+                    {
+                        vs_out.color = vec3(1.0, 1.0, 0.0);
                     }
                 }
                 else
