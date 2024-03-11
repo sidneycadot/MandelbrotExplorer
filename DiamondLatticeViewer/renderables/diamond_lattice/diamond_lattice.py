@@ -90,17 +90,17 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
                     c1 = np.array((ix, iy, iz))
                     c2 = np.array((jx, jy, jz))
 
-                    # The bond cylinder doesn't have to go from carbon to carbon; instead, it can go
-                    # from the intersection of the bond cylinder with the first carbon sphere to the
-                    # intersection of the bond cylinder with the second carbon sphere.
+                    # The bond cylinder doesn't have to go from the center of one carbon sphere to the center of
+                    # the next carbon sphere; instead, it can go from the intersection of the bond cylinder with
+                    # the first carbon sphere to the intersection of the bond cylinder with the second carbon sphere.
                     #
                     # This optimization makes the cylinder smaller, thereby decreasing the number
                     # of fragment shader runs.
                     #
-                    # We subtract 95% of the nominal value to make sure that the cylinder pierces
+                    # We subtract 98% of the nominal 'touching' value to make sure that the cylinder pierces
                     # the carbon spheres by a very small amount, thus preventing seams.
 
-                    subtract = 0.95 * np.sqrt(carbon_sphere_scale ** 2 - carbon_carbon_bond_scale ** 2)
+                    subtract = 0.98 * np.sqrt(carbon_sphere_scale ** 2 - carbon_carbon_bond_scale ** 2)
 
                     p1 = c2 + normalize(c1 - c2) * (np.linalg.norm(c1 - c2) - subtract)
                     p2 = c1 + normalize(c2 - c1) * (np.linalg.norm(c2 - c1) - subtract)
