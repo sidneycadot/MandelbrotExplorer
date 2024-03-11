@@ -1,6 +1,5 @@
 """This module implements the RenderableCylinderImpostor class."""
 
-from typing import Optional
 import ctypes
 import os
 
@@ -9,22 +8,25 @@ from PIL import Image
 import numpy as np
 
 from utilities.opengl_symbols import *
-from utilities.matrices import apply_transform_to_vertices
+from utilities.matrices import apply_transform_to_vertices, scale
 from utilities.opengl_utilities import create_opengl_program
 from utilities.geometry import make_cylinder_triangles
 
 from renderables.renderable import Renderable
 
 
-def make_cylinder_impostor_triangle_vertex_data(m_xform):
+def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
+
+    if transformation_matrix is None:
+        transformation_matrix = np.identity(4)
 
     triangles = make_cylinder_triangles(subdivision_count=6, capped=True)
 
     triangle_vertices = np.array(triangles).reshape(-1, 3)
 
-    triangle_vertices = np.multiply(triangle_vertices, (1.25, 1.25, 1.05))  # Oversize the impostor.
+    impostor_scale_matrix = scale((1.25, 1.25, 1.05))
 
-    triangle_vertices = apply_transform_to_vertices(m_xform, triangle_vertices)
+    triangle_vertices = apply_transform_to_vertices(transformation_matrix @ impostor_scale_matrix, triangle_vertices)
 
     print("triangle_vertices shape:", triangle_vertices.shape)
 

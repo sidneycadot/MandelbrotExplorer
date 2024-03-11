@@ -15,16 +15,18 @@ from utilities.opengl_utilities import create_opengl_program
 from utilities.geometry import make_unit_sphere_triangles
 
 
-def make_sphere_impostor_triangle_vertex_data(m_xform):
+def make_sphere_impostor_triangle_vertex_data(transformation_matrix=None):
+
+    if transformation_matrix is None:
+        transformation_matrix = np.identity(4)
 
     triangles = make_unit_sphere_triangles(recursion_level=0)
 
     triangle_vertices = np.array(triangles).reshape(-1, 3)
 
-    if m_xform is None:
-        m_xform = np.identity(4)
+    impostor_scale_matrix = scale(1.3)
 
-    triangle_vertices = apply_transform_to_vertices(m_xform @ scale(1.3), triangle_vertices)
+    triangle_vertices = apply_transform_to_vertices(transformation_matrix @ impostor_scale_matrix, triangle_vertices)
 
     vbo_dtype = np.dtype([
         ("a_vertex", np.float32, 3)

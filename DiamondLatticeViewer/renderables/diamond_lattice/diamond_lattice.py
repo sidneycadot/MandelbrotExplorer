@@ -9,7 +9,8 @@ import numpy as np
 from utilities.matrices import translate, scale, apply_transform_to_vertices
 from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
 from utilities.opengl_symbols import *
-from utilities.geometry import make_unit_sphere_triangles, make_cylinder_triangles, make_cylinder_placement_transform
+from utilities.geometry import make_unit_sphere_triangles, make_cylinder_triangles, make_cylinder_placement_transform, \
+    normalize
 
 from renderables.renderable import Renderable
 
@@ -19,17 +20,23 @@ def in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
     return (ix % 2 == iy % 2 == iz % 2) and (ix + iy + iz) % 4 < 2
 
 
-def make_diamond_lattice_unitcell_triangle_vertex_data():
+def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=None):
     """Define triangles for the sphere and cylinder impostors that we will upload to the VBO."""
+
+    if transformation_matrix is None:
+        transformation_matrix = np.identity(4)
+
+    carbon_sphere_scale = 0.3
+    carbon_carbon_bond_scale = 0.1
 
     # Make coarse unit sphere and unit cylinder triangle vertices.
     # These are used for the impostor hulls.
 
-    sphere_triangles = make_unit_sphere_triangles(recursion_level=0)
-    sphere_triangle_vertices = np.array(sphere_triangles).reshape(-1, 3)
+    unit_sphere_triangles = make_unit_sphere_triangles(recursion_level=0)
+    unit_sphere_triangle_vertices = np.array(unit_sphere_triangles).reshape(-1, 3)
 
-    cylinder_triangles = make_cylinder_triangles(subdivision_count=6, capped=False)
-    cylinder_triangle_vertices = np.array(cylinder_triangles).reshape(-1, 3)
+    unit_cylinder_triangles = make_cylinder_triangles(subdivision_count=6, capped=False)
+    unit_cylinder_triangle_vertices = np.array(unit_cylinder_triangles).reshape(-1, 3)
 
     vbo_dtype = np.dtype([
         ("a_vertex", np.float32, 3),  # Triangle vertex
@@ -42,24 +49,28 @@ def make_diamond_lattice_unitcell_triangle_vertex_data():
 
     vbo_data_list = []
 
+    sphere_impostor_scale_matrix = scale(1.26)
+    cylinder_impostor_scale_matrix = scale((1.1, 1.1, 1.01))
+
     for (ix, iy, iz) in itertools.product(range(4), repeat=3):
         if in_diamond_lattice(ix, iy, iz):
 
-            placement_matrix = translate((ix, iy, iz)) @ scale(0.3)
-            inverse_placement_matrix = np.linalg.inv(placement_matrix)
+            # Add triangles for a single Carbon sphere.
 
-            impostor_hull_matrix = placement_matrix @ scale(1.26)
+            sphere_placement_matrix = translate((ix, iy, iz)) @ scale(carbon_sphere_scale)
+            inverse_sphere_placement_matrix = np.linalg.inv(sphere_placement_matrix)
 
-            impostor_triangle_vertices = apply_transform_to_vertices(impostor_hull_matrix, sphere_triangle_vertices)
+            sphere_impostor_triangle_vertices = apply_transform_to_vertices(
+                sphere_placement_matrix @ sphere_impostor_scale_matrix, unit_sphere_triangle_vertices)
 
-            vbo_data = np.empty(dtype=vbo_dtype, shape=len(impostor_triangle_vertices))
+            vbo_data = np.empty(dtype=vbo_dtype, shape=len(sphere_impostor_triangle_vertices))
 
-            vbo_data["a_vertex"] = impostor_triangle_vertices
+            vbo_data["a_vertex"] = sphere_impostor_triangle_vertices
             vbo_data["a_lattice_position"] = (ix, iy, iz)
             vbo_data["a_lattice_delta"] = (0, 0, 0)
-            vbo_data["inverse_placement_matrix_row1"] = inverse_placement_matrix[0]
-            vbo_data["inverse_placement_matrix_row2"] = inverse_placement_matrix[1]
-            vbo_data["inverse_placement_matrix_row3"] = inverse_placement_matrix[2]
+            vbo_data["inverse_placement_matrix_row1"] = inverse_sphere_placement_matrix[0]
+            vbo_data["inverse_placement_matrix_row2"] = inverse_sphere_placement_matrix[1]
+            vbo_data["inverse_placement_matrix_row3"] = inverse_sphere_placement_matrix[2]
 
             vbo_data_list.append(vbo_data)
 
@@ -73,24 +84,40 @@ def make_diamond_lattice_unitcell_triangle_vertex_data():
                     continue
 
                 if in_diamond_lattice(jx, jy, jz):
-                    p1 = np.array((ix, iy, iz))
-                    p2 = np.array((jx, jy, jz))
 
-                    placement_matrix = make_cylinder_placement_transform(p1, p2, 0.10)
-                    inverse_placement_matrix = np.linalg.inv(placement_matrix)
+                    # Add triangles for a single Carbon-Carbon bond cylinder.
 
-                    impostor_hull_matrix = placement_matrix @ scale((1.1, 1.1, 1.01))
+                    c1 = np.array((ix, iy, iz))
+                    c2 = np.array((jx, jy, jz))
 
-                    current_bond_triangle_vertices = apply_transform_to_vertices(impostor_hull_matrix,
-                                                                                 cylinder_triangle_vertices)
+                    # The bond cylinder doesn't have to go from carbon to carbon; instead, it can go
+                    # from the intersection of the bond cylinder with the first carbon sphere to the
+                    # intersection of the bond cylinder with the second carbon sphere.
+                    #
+                    # This optimization makes the cylinder smaller, thereby decreasing the number
+                    # of fragment shader runs.
+                    #
+                    # We subtract 95% of the nominal value to make sure that the cylinder pierces
+                    # the carbon spheres by a very small amount, thus preventing seams.
 
-                    vbo_data = np.empty(dtype=vbo_dtype, shape=len(current_bond_triangle_vertices))
-                    vbo_data["a_vertex"] = current_bond_triangle_vertices
+                    subtract = 0.95 * np.sqrt(carbon_sphere_scale ** 2 - carbon_carbon_bond_scale ** 2)
+
+                    p1 = c2 + normalize(c1 - c2) * (np.linalg.norm(c1 - c2) - subtract)
+                    p2 = c1 + normalize(c2 - c1) * (np.linalg.norm(c2 - c1) - subtract)
+
+                    cylinder_placement_matrix = make_cylinder_placement_transform(p1, p2, carbon_carbon_bond_scale)
+                    inverse_cylinder_placement_matrix = np.linalg.inv(cylinder_placement_matrix)
+
+                    cylinder_impostor_triangle_vertices = apply_transform_to_vertices(
+                        cylinder_placement_matrix @ cylinder_impostor_scale_matrix, unit_cylinder_triangle_vertices)
+
+                    vbo_data = np.empty(dtype=vbo_dtype, shape=len(cylinder_impostor_triangle_vertices))
+                    vbo_data["a_vertex"] = cylinder_impostor_triangle_vertices
                     vbo_data["a_lattice_position"] = (ix, iy, iz)
                     vbo_data["a_lattice_delta"] = (dx, dy, dz)
-                    vbo_data["inverse_placement_matrix_row1"] = inverse_placement_matrix[0]
-                    vbo_data["inverse_placement_matrix_row2"] = inverse_placement_matrix[1]
-                    vbo_data["inverse_placement_matrix_row3"] = inverse_placement_matrix[2]
+                    vbo_data["inverse_placement_matrix_row1"] = inverse_cylinder_placement_matrix[0]
+                    vbo_data["inverse_placement_matrix_row2"] = inverse_cylinder_placement_matrix[1]
+                    vbo_data["inverse_placement_matrix_row3"] = inverse_cylinder_placement_matrix[2]
 
                     vbo_data_list.append(vbo_data)
 
