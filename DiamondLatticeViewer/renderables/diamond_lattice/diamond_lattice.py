@@ -8,7 +8,7 @@ import numpy as np
 
 from utilities.matrices import translate, scale, apply_transform_to_vertices
 from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
-from utilities.opengl_imports import *
+from utilities.opengl_symbols import *
 from utilities.geometry import make_unit_sphere_triangles, make_cylinder_triangles, make_cylinder_placement_transform
 
 from renderables.renderable import Renderable

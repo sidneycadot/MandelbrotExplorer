@@ -4,7 +4,7 @@ import numpy as np
 
 import glfw
 
-from utilities.opengl_imports import *
+from utilities.opengl_symbols import *
 from utilities.matrices import translate, rotate, scale, perspective_projection
 
 from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,

@@ -5,7 +5,7 @@ import ctypes
 
 import numpy as np
 
-from .opengl_imports import *
+from .opengl_symbols import *
 
 
 def make_shader(filename: str, shader_type):

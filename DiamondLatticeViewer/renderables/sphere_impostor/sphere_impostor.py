@@ -8,7 +8,7 @@ from PIL import Image
 
 import numpy as np
 
-from utilities.opengl_imports import *
+from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices
 from renderables.renderable import Renderable
 from utilities.opengl_utilities import create_opengl_program

@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 
-from utilities.opengl_imports import *
+from utilities.opengl_symbols import *
 from utilities.opengl_utilities import create_opengl_program
 
 from renderables.renderable import Renderable

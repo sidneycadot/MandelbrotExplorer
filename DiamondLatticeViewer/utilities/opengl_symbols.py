@@ -9,7 +9,7 @@ However, this brings in other symbols as well, leading to local namespace pollut
 For that reason, we provide this file that imports precisely the things we want from OpenGL.GL.
 Client code can now do:
 
-    from utilities.opengl_imports import *
+    from utilities.opengl_symbols import *
 
 Working like this, no spurious symbols are imported into the local namespace.
 
