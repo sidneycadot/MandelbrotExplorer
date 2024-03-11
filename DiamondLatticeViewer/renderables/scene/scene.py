@@ -1,7 +1,5 @@
 """This module implements the RenderableScene class."""
 
-from typing import Optional
-
 from renderables.renderable import Renderable
 
 

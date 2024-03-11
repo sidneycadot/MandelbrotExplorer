@@ -1,6 +1,5 @@
 """This module implements the RenderableCylinderImpostor class."""
 
-import ctypes
 import os
 
 from PIL import Image
@@ -9,7 +8,7 @@ import numpy as np
 
 from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices, scale
-from utilities.opengl_utilities import create_opengl_program
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
 from utilities.geometry import make_cylinder_triangles
 
 from renderables.renderable import Renderable
@@ -101,11 +100,8 @@ class RenderableCylinderImpostor(Renderable):
         self._vao = glGenVertexArrays(1)
         glBindVertexArray(self._vao)
 
-        # Defines the attribute with index 0 in the current VAO.
-
-        attribute_index = 0  # 3D vertex coordinates
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
-        glEnableVertexAttribArray(attribute_index)
+        # Define attributes based on the vbo_data element type and enable them.
+        define_vertex_attributes(vbo_data.dtype, True)
 
         # Unbind VAO
         glBindVertexArray(0)

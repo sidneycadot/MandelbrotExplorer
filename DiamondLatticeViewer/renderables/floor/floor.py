@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 
-
 from utilities.opengl_symbols import *
 from utilities.opengl_utilities import create_opengl_program
 

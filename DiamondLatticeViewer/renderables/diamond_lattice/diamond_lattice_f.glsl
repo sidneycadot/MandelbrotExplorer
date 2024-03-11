@@ -136,7 +136,7 @@ void main()
     float contrib_d1 = max(0.0, dot(mv_lightsource1_direction, mv_surface_normal));
     float contrib_s1 = pow(max(0.0, dot(mv_lightsource1_reflection_direction, mv_viewer_direction)), phong_alpha);
 
-    if (fs_in.object_type == 2)
+    if (fs_in.object_type == 2) // disabled.
     {
         float u = 0.5 + 0.5 * atan(object_hit.x, object_hit.z) / PI;
         float v = 0.5 - 0.5 * object_hit.y;

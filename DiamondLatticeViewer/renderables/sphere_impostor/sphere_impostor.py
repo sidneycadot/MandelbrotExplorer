@@ -1,7 +1,6 @@
 """This module implements the RenderableSphereImpostor class."""
 
 import os
-import ctypes
 
 from PIL import Image
 
@@ -10,7 +9,7 @@ import numpy as np
 from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices, scale
 from renderables.renderable import Renderable
-from utilities.opengl_utilities import create_opengl_program
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
 from utilities.geometry import make_unit_sphere_triangles
 
 
@@ -99,11 +98,8 @@ class RenderableSphereImpostor(Renderable):
         self._vao = glGenVertexArrays(1)
         glBindVertexArray(self._vao)
 
-        # Defines the attribute with index 0 in the current VAO.
-
-        attribute_index = 0  # 3D vertex coordinates
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
-        glEnableVertexAttribArray(attribute_index)
+        # Define attributes based on the vbo_data element type and enable them.
+        define_vertex_attributes(vbo_data.dtype, True)
 
         # Unbind VAO
         glBindVertexArray(0)

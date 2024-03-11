@@ -1,7 +1,5 @@
 """This module implements the RenderableModelTransformer class."""
 
-from typing import Optional
-
 from renderables.renderable import Renderable
 
 

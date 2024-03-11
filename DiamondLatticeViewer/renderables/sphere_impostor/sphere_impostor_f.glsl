@@ -29,8 +29,6 @@ const float is1 = 1.02;
 
 const float phong_alpha = 20.0;
 
-const
-
 float intersect_unit_sphere(vec3 origin, vec3 direction)
 {
     // See: https://en.wikipedia.org/wiki/Line–sphere_intersection
