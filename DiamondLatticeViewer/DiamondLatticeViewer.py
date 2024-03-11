@@ -3,8 +3,8 @@
 import numpy as np
 
 import glfw
-from OpenGL.GL import *
 
+from utilities.opengl_imports import *
 from utilities.matrices import translate, rotate, scale, perspective_projection
 
 from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,
@@ -15,7 +15,7 @@ from utilities.world import World
 
 
 def make_scene(world: World) -> RenderableScene:
-    """Create a scene in the world."""
+    """Create a scene in the given world."""
 
     scene = RenderableScene()
 
@@ -50,7 +50,11 @@ def make_scene(world: World) -> RenderableScene:
         sphere_imposter_constellation.add_model(
             RenderableModelTransformer(
                 earth,
-                lambda: translate((+0.8, 0.0, 0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 0 * world.time())
+                lambda: np.linalg.multi_dot(
+                    translate((+0.8, 0.0, 0)),
+                    scale((1.0, 1.0, 1.0)),
+                    rotate((0, 1, 0), 0 * world.time())
+                )
             )
         )
 
@@ -59,14 +63,20 @@ def make_scene(world: World) -> RenderableScene:
         sphere_imposter_constellation.add_model(
             RenderableModelTransformer(
                 moon,
-                lambda: translate((-0.8, 0.0, 0.3)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 0 * world.time())
+                lambda: np.linalg.multi_dot((
+                    translate((-0.8, 0.0, 0.3)),
+                    scale((1.0, 1.0, 1.0)),
+                    rotate((0, 1, 0), 0.0 * world.time())
+                ))
             )
         )
 
         scene.add_model(
             RenderableModelTransformer(
                 sphere_imposter_constellation,
-                lambda: rotate((0, 1, 0), 1 * world.time())
+                lambda: np.linalg.multi_dot((
+                    rotate((0, 1, 0), 1.0 * world.time())
+                ))
             )
         )
 
@@ -77,9 +87,12 @@ def make_scene(world: World) -> RenderableScene:
         scene.add_model(
             RenderableModelTransformer(
                 cylinder_impostor,
-                lambda: translate((+0.25, 0.0, 0)) @ rotate((0, 1, 0), 0 * world.time()) @ rotate((1, 0, 0),
-                                                                                                  0.5 * world.time()) @ scale(
-                    (0.2, 0.2, 4.0))
+                lambda: np.linalg.multidot((
+                    translate((+0.25, 0.0, 0)),
+                    rotate((0, 1, 0), 0.0 * world.time()),
+                    rotate((1, 0, 0), 0.5 * world.time()),
+                    scale((0.2, 0.2, 4.0))
+                ))
             )
         )
 

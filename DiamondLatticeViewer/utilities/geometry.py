@@ -98,7 +98,7 @@ def make_unit_sphere_triangles(recursion_level: int):
 
 
 def make_cylinder_triangles(subdivision_count: int, capped: bool):
-    """Make a triangularisation of a unit cylinder."""
+    """Make a triangulation of a unit cylinder."""
 
     z_lo = -0.5
     z_hi = +0.5
@@ -162,11 +162,11 @@ def make_cylinder_placement_transform(p1, p2, diameter) -> np.ndarray:
         orientation_matrix = rotate(rotation_vector, rotation_angle)
 
     # Apply a translation, scaling, rotation, and translation.
-    placement_matrix = (
-            translate(p1) @
-            orientation_matrix @
-            scale((diameter, diameter, np.linalg.norm(p_vector))) @
-            translate((0, 0, 0.5))
-    )
+    placement_matrix = np.linalg.multi_dot((
+        translate(p1),
+        orientation_matrix,
+        scale((diameter, diameter, np.linalg.norm(p_vector))),
+        translate((0, 0, 0.5))
+    ))
 
     return placement_matrix

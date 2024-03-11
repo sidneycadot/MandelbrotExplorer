@@ -1,8 +1,11 @@
 """OpenGL utility functions."""
 
 import os
+import ctypes
 
-from OpenGL.GL import *
+import numpy as np
+
+from .opengl_imports import *
 
 
 def make_shader(filename: str, shader_type):
@@ -77,3 +80,49 @@ def create_opengl_program(prefix: str) -> tuple:
         raise  # Re-raise exception
 
     return shaders, shader_program
+
+
+def define_vertex_attributes(vbo_dtype, enable_flag: bool):
+    """Examine a numpy structured array dtype and declare and enable the corresponding vertex attributes."""
+
+    for (attribute_index, field_info_tuple) in enumerate(vbo_dtype.fields.values()):
+
+        field_dtype = field_info_tuple[0]
+        field_offset = field_info_tuple[1]
+
+        field_sub_dtype = field_dtype.subdtype
+        if field_sub_dtype is None:
+            raise RuntimeError("Expected array dtype")
+
+        (field_item_dtype, field_shape) = field_sub_dtype
+
+        if len(field_shape) != 1:
+            raise RuntimeError("Expected shape with 1 element.")
+
+        field_element_count = field_shape[0]
+        if not (1 <= field_element_count <= 4):
+            raise RuntimeError("Bad number of elements.")
+
+        match field_item_dtype:
+            case np.float32:
+                glVertexAttribPointer(
+                    attribute_index,
+                    field_element_count,
+                    GL_FLOAT,
+                    GL_FALSE,
+                    vbo_dtype.itemsize,
+                    ctypes.c_void_p(field_offset)
+                )
+            case np.int32:
+                glVertexAttribIPointer(
+                    attribute_index,
+                    field_element_count,
+                    GL_INT,
+                    vbo_dtype.itemsize,
+                    ctypes.c_void_p(field_offset)
+                )
+            case _:
+                raise RuntimeError("Unknown field type.")
+
+        if enable_flag:
+            glEnableVertexAttribArray(attribute_index)

@@ -1,8 +1,29 @@
-"""Import names."""
+"""Import OpenGL names in a controlled way.
+
+PyOpenGL provides a lot of constants and functions. The usual way to deal with this is to do:
+
+    from OpenGL.GL import *
+
+However, this brings in other symbols as well, leading to local namespace pollution.
+
+For that reason, we provide this file that imports precisely the things we want from OpenGL.GL.
+Client code can now do:
+
+    from utilities.opengl_imports import *
+
+Working like this, no spurious symbols are imported into the local namespace.
+
+The disadvantage is that this file needs to explicitly import all symbols that we need, and thus requires some
+maintenance effort.
+"""
 
 # noinspection PyUnresolvedReferences
 
 from OpenGL.GL import (
+
+    # OpenGL constants.
+
+    GL_COMPILE_STATUS,
     GL_FALSE, GL_TRUE,
     GL_INT, GL_FLOAT,
     GL_ARRAY_BUFFER,
@@ -19,7 +40,26 @@ from OpenGL.GL import (
     GL_RGB,
     GL_UNSIGNED_BYTE,
     GL_TRIANGLE_STRIP,
+    GL_DEPTH_TEST,
+    GL_BACK,
+    GL_COLOR_BUFFER_BIT,
+    GL_DEPTH_BUFFER_BIT,
+    GL_VERTEX_SHADER,
+    GL_GEOMETRY_SHADER,
+    GL_FRAGMENT_SHADER,
+    GL_LINK_STATUS,
+
+    # OpenGL functions.
+
+    glCreateProgram,
+    glCreateShader,
+    glAttachShader,
+    glShaderSource,
+    glLinkProgram,
+    glCompileShader,
     glGetUniformLocation,
+    glGetShaderiv,
+    glGetProgramiv,
     glGenBuffers,
     glGenVertexArrays, glVertexAttribPointer,
     glVertexAttribIPointer,
@@ -29,7 +69,7 @@ from OpenGL.GL import (
     glBindVertexArray,
     glEnable, glDisable,
     glUseProgram,
-    glUniformMatrix4fv, glUniform1f, glUniform1ui,
+    glUniform1f, glUniform1ui, glUniformMatrix4fv,
     glDrawArraysInstanced,
     glDeleteVertexArrays,
     glDeleteBuffers,
@@ -40,5 +80,12 @@ from OpenGL.GL import (
     glBindTexture,
     glTexImage2D,
     glGenerateMipmap,
-    glDrawArrays
+    glDrawArrays,
+    glPointSize,
+    glClearColor,
+    glCullFace,
+    glClear,
+    glViewport,
+    glGetShaderInfoLog,
+    glGetProgramInfoLog
 )
