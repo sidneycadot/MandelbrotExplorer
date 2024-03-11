@@ -103,9 +103,7 @@ class RenderableDiamondLattice(Renderable):
 
     """A Renderable that renders a diamond crystal lattice using sphere and cylinder impostors."""
 
-    def __init__(self, name: Optional[str] = None):
-
-        super().__init__(name)
+    def __init__(self):
 
         # Variables that are used to communicate with the shaders.
 
@@ -184,17 +182,17 @@ class RenderableDiamondLattice(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
-    def render(self, m_projection, m_view, m_model):
+    def render(self, projection_matrix, view_matrix, model_matrix):
 
         glUseProgram(self._shader_program)
 
-        glUniformMatrix4fv(self._projection_matrix_location, 1, GL_TRUE, m_projection.astype(np.float32))
-        glUniformMatrix4fv(self._transposed_inverse_view_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view).T.astype(np.float32))
-        glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, (m_projection @ m_view @ m_model).astype(np.float32))
-        glUniformMatrix4fv(self._view_model_matrix_location, 1, GL_TRUE, (m_view @ m_model).astype(np.float32))
-        glUniformMatrix4fv(self._inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view @ m_model).astype(np.float32))
+        glUniformMatrix4fv(self._projection_matrix_location, 1, GL_TRUE, projection_matrix.astype(np.float32))
+        glUniformMatrix4fv(self._transposed_inverse_view_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix).T.astype(np.float32))
+        glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, (projection_matrix @ view_matrix @ model_matrix).astype(np.float32))
+        glUniformMatrix4fv(self._view_model_matrix_location, 1, GL_TRUE, (view_matrix @ model_matrix).astype(np.float32))
+        glUniformMatrix4fv(self._inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).astype(np.float32))
 
-        glUniformMatrix4fv(self._transposed_inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(m_view @ m_model).T.astype(np.float32))
+        glUniformMatrix4fv(self._transposed_inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).T.astype(np.float32))
 
         glUniform1ui(self._unit_cells_per_dimension_location, self.unit_cells_per_dimension)
         glUniform1ui(self._color_mode_location, self.color_mode)

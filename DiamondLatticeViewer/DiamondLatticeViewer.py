@@ -7,9 +7,7 @@ import glfw
 from utilities.opengl_symbols import *
 from utilities.matrices import translate, rotate, scale, perspective_projection, multiply_matrices
 
-from renderables import (RenderableScene,
-                         RenderableOptionalModel, RenderableModelTransformer,
-                         RenderablePlanet, RenderableFloor,
+from renderables import (RenderableScene, RenderableOptionalModel, RenderableModelTransformer, RenderableFloor,
                          RenderableSphereImpostor, RenderableCylinderImpostor, RenderableDiamondLattice)
 
 from utilities.world import World
@@ -20,8 +18,9 @@ def make_scene(world: World) -> RenderableScene:
 
     scene = RenderableScene()
 
-    world.set_variable("floor_enabled", True)
+    # The floor model.
 
+    world.set_variable("floor_enabled", True)
     scene.add_model(
         RenderableOptionalModel(
             RenderableModelTransformer(
@@ -32,18 +31,7 @@ def make_scene(world: World) -> RenderableScene:
         )
     )
 
-    draw_earth = False
-    if draw_earth:
-        # add center earth with smaller earths around it.
-
-        earth = RenderablePlanet()
-
-        scene.add_model(
-            RenderableModelTransformer(
-                earth,
-                lambda: translate((0, 0.0, 0)) @ scale(4.0) @ rotate((0, 1, 0), world.time())
-            )
-        )
+    # The sphere impostor constellation.
 
     draw_sphere_impostor = False
     if draw_sphere_impostor:
@@ -84,7 +72,9 @@ def make_scene(world: World) -> RenderableScene:
             )
         )
 
-    draw_cylinder_impostor = True
+    # The cylinder impostor constellation.
+
+    draw_cylinder_impostor = False
     if draw_cylinder_impostor:
         cylinder_impostor = RenderableCylinderImpostor()
 
@@ -113,11 +103,14 @@ def make_scene(world: World) -> RenderableScene:
             )
         )
 
-    draw_diamond_impostor = False
-    if draw_diamond_impostor:
-        diamond_lattice = RenderableDiamondLattice(name="diamond_lattice")
+    # The diamond lattice.
 
-        scene.add_model(
+    diamond_lattice = RenderableDiamondLattice()
+    world.set_variable("diamond_lattice", diamond_lattice)
+
+    world.set_variable("diamond_lattice_enabled", True)
+    scene.add_model(
+        RenderableOptionalModel(
             RenderableModelTransformer(
                 diamond_lattice,
                 lambda: multiply_matrices(
@@ -126,21 +119,102 @@ def make_scene(world: World) -> RenderableScene:
                     rotate((0, 0, 1), 0.11 * world.time()),
                     rotate((0, 1, 0), 0.07 * world.time())
                 )
-            )
+            ),
+            lambda: world.get_variable("diamond_lattice_enabled")
         )
+    )
 
     return scene
+
+
+class UserInteractionHandler:
+    pass
+
+
+class DefaultUserInteractionHandler(UserInteractionHandler):
+
+    def __init__(self, world):
+        self._world = world
+
+    def process_keyboard_event(self, window, key: int, _scancode: int, action: int, mods: int):
+
+        world = self._world
+
+        if action in (glfw.PRESS, glfw.REPEAT):
+            match key:
+                case glfw.KEY_SPACE:
+                    realtime_factor = world.get_realtime_factor()
+                    realtime_factor = 1.0 if realtime_factor == 0.0 else 0.0
+                    world.set_realtime_factor(realtime_factor)
+                case glfw.KEY_COMMA:
+                    realtime_factor = world.get_realtime_factor()
+                    realtime_factor = 0.5 * realtime_factor
+                    world.set_realtime_factor(realtime_factor)
+                case glfw.KEY_PERIOD:
+                    realtime_factor = world.get_realtime_factor()
+                    realtime_factor = 2.0 * realtime_factor
+                    world.set_realtime_factor(realtime_factor)
+                case glfw.KEY_SLASH:
+                    realtime_factor = world.get_realtime_factor()
+                    realtime_factor = -realtime_factor
+                    world.set_realtime_factor(realtime_factor)
+                case glfw.KEY_ESCAPE:
+                    glfw.set_window_should_close(window, True)
+                case glfw.KEY_0:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    diamond_lattice.cut_mode = 0
+                case glfw.KEY_1:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    diamond_lattice.cut_mode = 1 if diamond_lattice.cut_mode != 1 else 0
+                case glfw.KEY_2:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    diamond_lattice.cut_mode = 2 if diamond_lattice.cut_mode != 2 else 0
+                case glfw.KEY_3:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    diamond_lattice.cut_mode = 3 if diamond_lattice.cut_mode != 3 else 0
+                case glfw.KEY_C:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    diamond_lattice.color_mode = (diamond_lattice.color_mode + 1) % 3
+                case glfw.KEY_D:
+                    diamond_lattice_enabled = world.get_variable("diamond_lattice_enabled")
+                    diamond_lattice_enabled = not diamond_lattice_enabled
+                    world.set_variable("diamond_lattice_enabled", diamond_lattice_enabled)
+                case glfw.KEY_F:
+                    floor_enabled = world.get_variable("floor_enabled")
+                    floor_enabled = not floor_enabled
+                    world.set_variable("floor_enabled", floor_enabled)
+                case glfw.KEY_I:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    diamond_lattice.impostor_mode = (diamond_lattice.impostor_mode + 1) % 2
+                case glfw.KEY_RIGHT_BRACKET:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    if (mods & glfw.MOD_SHIFT) != 0:
+                        diamond_lattice.unit_cells_per_dimension = diamond_lattice.unit_cells_per_dimension + 2
+                    else:
+                        diamond_lattice.crystal_side_length = diamond_lattice.crystal_side_length + 2.0
+                case glfw.KEY_LEFT_BRACKET:
+                    diamond_lattice = world.get_variable("diamond_lattice")
+                    if (mods & glfw.MOD_SHIFT) != 0:
+                        diamond_lattice.unit_cells_per_dimension = max(1, diamond_lattice.unit_cells_per_dimension - 2)
+                    else:
+                        diamond_lattice.crystal_side_length = max(0, diamond_lattice.crystal_side_length - 2.0)
+                case glfw.KEY_UP:
+                    render_distance = world.get_variable("render_distance")
+                    render_distance = max(0.0, render_distance - 5.0)
+                    world.set_variable("render_distance", render_distance)
+                case glfw.KEY_DOWN:
+                    render_distance = world.get_variable("render_distance")
+                    render_distance = render_distance + 5.0
+                    world.set_variable("render_distance", render_distance)
 
 
 class Application:
 
     def __init__(self):
-        self.render_distance = 60.0
-        self._diamond_model = None
-        self._world = None
+        self._user_interaction_handler = None
 
     @staticmethod
-    def create_glfw_window(version_major: int, version_minor: int, fullscreen_flag: bool):
+    def create_glfw_window(version_major: int, version_minor: int):
         """Create a window using GLFW."""
 
         # Set up window creation hints.
@@ -179,20 +253,22 @@ class Application:
 
         # Create a GLFW window and set it as the current OpenGL context.
 
-        window = Application.create_glfw_window(4, 1, True)
+        window = Application.create_glfw_window(4, 1)
 
-        glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_HIDDEN)
+        # glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_HIDDEN)
 
-        glfw.set_framebuffer_size_callback(window, lambda *args: Application.framebuffer_size_callback(*args))
-        glfw.set_key_callback(window, lambda *args: self.key_callback(*args))
+        glfw.set_framebuffer_size_callback(window, lambda *args: self._framebuffer_size_callback(*args))
+        glfw.set_key_callback(window, lambda *args: self._key_callback(*args))
 
         glfw.make_context_current(window)
 
-        self._world = world = World()
+        world = World()
 
-        scene = make_scene(self._world)
+        world.set_variable("render_distance", 60.0)
 
-        self._diamond_model = scene.find("diamond_lattice")
+        self._user_interaction_handler = DefaultUserInteractionHandler(world)
+
+        scene = make_scene(world)
 
         # Prepare loop.
 
@@ -223,31 +299,41 @@ class Application:
                     print("@@ {:20.4f} ms per frame".format(frame_duration * 1000.0))
                 t_previous_wallclock = t_wallclock
 
-            # Sample world time. All queries to world.time() will be identical.
+            # Sample world time.
+            # All queries to world.time() up until the next sample_time() call will give the same time value.
+
             world.sample_time()
 
             # Make view matrix.
 
-            m_view = translate((0.0, -4.0, -self.render_distance)) @ rotate((0, 1, 0), world.time() * 0.0)
+            render_distance = world.get_variable("render_distance")
+
+            view_matrix = translate((0.0, 0.0, -render_distance)) @ rotate((0, 1, 0), world.time() * 0.0)
 
             # Make model matrix.
 
-            m_model = np.identity(4)
+            model_matrix = np.identity(4)
 
             # Make perspective projection matrix.
 
             (framebuffer_width, framebuffer_height) = glfw.get_framebuffer_size(window)
 
-            if framebuffer_width * framebuffer_height == 0:
-                continue
+            if framebuffer_width > 0 and framebuffer_height > 0:
 
-            m_projection = perspective_projection(framebuffer_width, framebuffer_height, fov_degrees, near_plane, far_plane)
+                projection_matrix = perspective_projection(
+                    framebuffer_width,
+                    framebuffer_height,
+                    fov_degrees,
+                    near_plane,
+                    far_plane
+                )
 
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-            scene.render(m_projection, m_view, m_model)
+                scene.render(projection_matrix, view_matrix, model_matrix)
 
-            glfw.swap_buffers(window)
+                glfw.swap_buffers(window)
+
             glfw.poll_events()
             frame_counter += 1
 
@@ -257,76 +343,13 @@ class Application:
         glfw.terminate()
 
     @staticmethod
-    def framebuffer_size_callback(_window, width, height):
+    def _framebuffer_size_callback(_window, width, height):
         print("Resizing framebuffer:", width, height)
         glViewport(0, 0, width, height)
 
-    def key_callback(self, window, key: int, _scancode: int, action: int, mods: int):
-
-        if action in (glfw.PRESS, glfw.REPEAT):
-            match key:
-                case glfw.KEY_SPACE:
-                    rtf = self._world.get_realtime_factor()
-                    rtf = 1.0 if rtf == 0.0 else 0.0
-                    self._world.set_realtime_factor(rtf)
-                case glfw.KEY_COMMA:
-                    rtf = self._world.get_realtime_factor()
-                    rtf = 0.5 * rtf
-                    self._world.set_realtime_factor(rtf)
-                case glfw.KEY_PERIOD:
-                    rtf = self._world.get_realtime_factor()
-                    rtf = 2.0 * rtf
-                    self._world.set_realtime_factor(rtf)
-                case glfw.KEY_SLASH:
-                    rtf = self._world.get_realtime_factor()
-                    rtf = -rtf
-                    self._world.set_realtime_factor(rtf)
-                case glfw.KEY_ESCAPE:
-                    glfw.set_window_should_close(window, True)
-                case glfw.KEY_0:
-                    if self._diamond_model is not None:
-                        self._diamond_model.cut_mode = 0
-                case glfw.KEY_1:
-                    if self._diamond_model is not None:
-                        self._diamond_model.cut_mode = 1 if self._diamond_model.cut_mode != 1 else 0
-                case glfw.KEY_2:
-                    if self._diamond_model is not None:
-                       self._diamond_model.cut_mode = 2 if self._diamond_model.cut_mode != 2 else 0
-                case glfw.KEY_3:
-                    if self._diamond_model is not None:
-                        self._diamond_model.cut_mode = 3 if self._diamond_model.cut_mode != 3 else 0
-                case glfw.KEY_C:
-                    if self._diamond_model is not None:
-                        self._diamond_model.color_mode = (self._diamond_model.color_mode + 1) % 3
-                case glfw.KEY_F:
-                    self._world.set_variable("floor_enabled", not self._world.get_variable("floor_enabled"))
-                case glfw.KEY_I:
-                    if self._diamond_model is not None:
-                        self._diamond_model.impostor_mode = (self._diamond_model.impostor_mode + 1) % 2
-                case glfw.KEY_RIGHT_BRACKET:
-                    if self._diamond_model is not None:
-                        if (mods & glfw.MOD_SHIFT) != 0:
-                            self._diamond_model.unit_cells_per_dimension = self._diamond_model.unit_cells_per_dimension + 2
-                        else:
-                            self._diamond_model.crystal_side_length = self._diamond_model.crystal_side_length + 2.0
-                case glfw.KEY_LEFT_BRACKET:
-                        if self._diamond_model is not None:
-                            if (mods & glfw.MOD_SHIFT) != 0:
-                                self._diamond_model.unit_cells_per_dimension = max(1, self._diamond_model.unit_cells_per_dimension - 2)
-                            else:
-                                self._diamond_model.crystal_side_length = max(0, self._diamond_model.crystal_side_length - 2.0)
-                case glfw.KEY_UP:
-                    self.render_distance = max(0.0, self.render_distance - 5.0)
-                case glfw.KEY_DOWN:
-                        self.render_distance = self.render_distance + 5.0
-
-            if self._diamond_model is not None:
-                print("render distance {} diamond cut: {} diamond unit_cells_per_dimension: {} diamond crystal_side_length: {}".format(
-                    self.render_distance,
-                    self._diamond_model.cut_mode,
-                    self._diamond_model.unit_cells_per_dimension,
-                    self._diamond_model.crystal_side_length
-                ))
+    def _key_callback(self, window, key: int, scancode: int, action: int, mods: int):
+        if self._user_interaction_handler is not None:
+            self._user_interaction_handler.process_keyboard_event(window, key, scancode, action, mods)
 
 
 def main():

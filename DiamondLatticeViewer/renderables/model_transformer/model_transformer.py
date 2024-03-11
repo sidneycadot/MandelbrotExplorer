@@ -7,9 +7,7 @@ from renderables.renderable import Renderable
 
 class RenderableModelTransformer(Renderable):
 
-    def __init__(self, model, func, name: Optional[str] = None):
-
-        super().__init__(name)
+    def __init__(self, model, func):
 
         self._model = model
         self._func = func
@@ -19,9 +17,6 @@ class RenderableModelTransformer(Renderable):
         self._model = None
         self._func = None
 
-    def render(self, m_projection, m_view, m_model):
+    def render(self, projection_matrix, view_matrix, model_matrix):
         m_func = self._func()
-        self._model.render(m_projection, m_view, m_model @ m_func)
-
-    def children(self):
-        yield self._model
+        self._model.render(projection_matrix, view_matrix, model_matrix @ m_func)

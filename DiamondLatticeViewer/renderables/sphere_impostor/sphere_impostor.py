@@ -39,9 +39,7 @@ def make_sphere_impostor_triangle_vertex_data(m_xform):
 
 class RenderableSphereImpostor(Renderable):
 
-    def __init__(self, texture_filename: str, m_xform=None, name: Optional[str] = None):
-
-        super().__init__(name)
+    def __init__(self, texture_filename: str, m_xform=None):
 
         # Compile the shader program.
 

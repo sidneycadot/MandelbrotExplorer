@@ -38,11 +38,10 @@ def make_cylinder_impostor_triangle_vertex_data(m_xform):
 
     return vbo_data
 
+
 class RenderableCylinderImpostor(Renderable):
 
-    def __init__(self, m_xform=None, *, name: Optional[str] = None):
-
-        super().__init__(name)
+    def __init__(self, m_xform=None):
 
         # Compile the shader program.
 

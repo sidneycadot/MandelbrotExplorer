@@ -8,9 +8,7 @@ from renderables.renderable import Renderable
 class RenderableScene(Renderable):
     """A collection of renderable models."""
 
-    def __init__(self, name: Optional[str] = None):
-
-        super().__init__(name)
+    def __init__(self):
         self._models = []
 
     def close(self) -> None:
@@ -21,9 +19,6 @@ class RenderableScene(Renderable):
     def add_model(self, model: Renderable):
         self._models.append(model)
 
-    def render(self, m_projection, m_view, m_model) -> None:
+    def render(self, projection_matrix, model_matrix, view_matrix) -> None:
         for model in self._models:
-            model.render(m_projection, m_view, m_model)
-
-    def children(self):
-        yield from self._models
+            model.render(projection_matrix, model_matrix, view_matrix)

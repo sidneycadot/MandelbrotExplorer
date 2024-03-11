@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from .matrices import scale, rotate, translate
+from .matrices import scale, rotate, translate, multiply_matrices
 
 
 def normalize(v) -> np.ndarray:

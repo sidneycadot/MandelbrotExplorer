@@ -1,6 +1,5 @@
 """This module implements the RenderableFloor class."""
 
-from typing import Optional
 import os
 
 import numpy as np
@@ -11,17 +10,16 @@ from utilities.opengl_utilities import create_opengl_program
 
 from renderables.renderable import Renderable
 
+
 class RenderableFloor(Renderable):
 
-    def __init__(self, h_size: float, v_size: float, name: Optional[str] = None):
-
-        super().__init__(name)
+    def __init__(self, h_size: float, v_size: float):
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "floor")
 
         (self._shaders, self._shader_program) = create_opengl_program(shader_source_path)
 
-        self._mvp_location = glGetUniformLocation(self._shader_program, "mvp")
+        self._projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "projection_view_model_matrix")
 
         vertex_data = np.array([
             (-0.5 * h_size, -0.5 * v_size),
@@ -75,12 +73,12 @@ class RenderableFloor(Renderable):
                 glDeleteShader(shader)
             self._shaders = None
 
-    def render(self, m_projection, m_view, m_model):
+    def render(self, projection_matrix, view_matrix, model_matrix):
 
         glUseProgram(self._shader_program)
 
-        mvp = m_projection @ m_view @ m_model
-        glUniformMatrix4fv(self._mvp_location, 1, GL_TRUE, mvp.astype(np.float32))
+        projection_view_model_matrix = projection_matrix @ view_matrix @ model_matrix
+        glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, projection_view_model_matrix.astype(np.float32))
 
         glEnable(GL_CULL_FACE)
 
