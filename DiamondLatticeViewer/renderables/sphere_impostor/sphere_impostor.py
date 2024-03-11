@@ -2,7 +2,6 @@
 
 import os
 import ctypes
-from typing import Optional
 
 from PIL import Image
 

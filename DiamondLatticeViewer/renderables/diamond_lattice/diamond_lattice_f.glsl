@@ -24,7 +24,10 @@ const float phong_alpha = 20; // Alpha value for specular reflection.
 
 const vec3 m_lightsource1_direction = normalize(vec3(+1, 1, 1));
 
+uniform sampler2D my_texture;
+
 const float INVALID = -1.0;
+const float PI = 4 * atan(1);
 
 float intersect_unit_sphere(vec3 origin, vec3 direction)
 {
@@ -90,7 +93,7 @@ void main()
     }
 
     // This is the point where the ray and the object intersect in the "object" coordinate system.
-    // It is normalized since it is on the unit sphere.
+    // It is normalized since it is on the unit sphere or unit cylinder.
 
     vec3 object_hit = object_eye + alpha * object_eye_to_impostor_hit_vector;
 
@@ -132,6 +135,14 @@ void main()
 
     float contrib_d1 = max(0.0, dot(mv_lightsource1_direction, mv_surface_normal));
     float contrib_s1 = pow(max(0.0, dot(mv_lightsource1_reflection_direction, mv_viewer_direction)), phong_alpha);
+
+    if (fs_in.object_type == 2)
+    {
+        float u = 0.5 + 0.5 * atan(object_hit.x, object_hit.z) / PI;
+        float v = 0.5 - 0.5 * object_hit.y;
+
+        k_material *= texture(my_texture, vec2(u, v)).xyz;
+    }
 
     vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1);
 

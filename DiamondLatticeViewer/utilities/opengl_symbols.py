@@ -48,6 +48,7 @@ from OpenGL.GL import (
     GL_GEOMETRY_SHADER,
     GL_FRAGMENT_SHADER,
     GL_LINK_STATUS,
+    GL_R8,
 
     # OpenGL functions.
 
