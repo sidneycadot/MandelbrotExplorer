@@ -143,9 +143,9 @@ class DefaultUserInteractionHandler(UserInteractionHandler):
         if action in (glfw.PRESS, glfw.REPEAT):
             match key:
                 case glfw.KEY_SPACE:
-                    realtime_factor = world.get_realtime_factor()
-                    realtime_factor = 1.0 if realtime_factor == 0.0 else 0.0
-                    world.set_realtime_factor(realtime_factor)
+                    freeze_status = world.get_freeze_status()
+                    freeze_status = not freeze_status
+                    world.set_freeze_status(freeze_status)
                 case glfw.KEY_COMMA:
                     realtime_factor = world.get_realtime_factor()
                     realtime_factor = 0.5 * realtime_factor
