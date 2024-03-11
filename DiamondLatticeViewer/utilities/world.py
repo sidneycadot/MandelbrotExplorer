@@ -1,3 +1,7 @@
+"""This module implements the World class."""
+
+
+from typing import Any
 
 import glfw
 
@@ -8,6 +12,7 @@ class World:
         self._sample_time = glfw.get_time()
         self._alpha = 0.0
         self._beta = 1.0
+        self._variables = {}
 
     def sample_time(self):
         self._sample_time = glfw.get_time()
@@ -25,3 +30,9 @@ class World:
 
     def get_realtime_factor(self):
         return self._beta
+
+    def set_variable(self, name: str, value: Any):
+        self._variables[name] = value
+
+    def get_variable(self, name):
+        return self._variables[name]

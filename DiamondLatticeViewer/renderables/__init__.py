@@ -2,6 +2,7 @@
 
 from .scene.scene import RenderableScene
 from .model_transformer.model_transformer import RenderableModelTransformer
+from .optional_model.optional_model import RenderableOptionalModel
 
 from .floor.floor import RenderableFloor
 from .planet.planet import RenderablePlanet

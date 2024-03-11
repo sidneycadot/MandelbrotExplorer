@@ -162,11 +162,11 @@ def make_cylinder_placement_transform(p1, p2, diameter) -> np.ndarray:
         orientation_matrix = rotate(rotation_vector, rotation_angle)
 
     # Apply a translation, scaling, rotation, and translation.
-    placement_matrix = np.linalg.multi_dot((
+    placement_matrix = multiply_matrices(
         translate(p1),
         orientation_matrix,
         scale((diameter, diameter, np.linalg.norm(p_vector))),
         translate((0, 0, 0.5))
-    ))
+    )
 
     return placement_matrix

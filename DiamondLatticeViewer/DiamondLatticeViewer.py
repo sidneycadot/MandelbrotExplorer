@@ -5,11 +5,12 @@ import numpy as np
 import glfw
 
 from utilities.opengl_symbols import *
-from utilities.matrices import translate, rotate, scale, perspective_projection
+from utilities.matrices import translate, rotate, scale, perspective_projection, multiply_matrices
 
-from renderables import (RenderablePlanet, RenderableFloor, RenderableScene, RenderableModelTransformer,
-                         RenderableSphereImpostor, RenderableCylinderImpostor,
-                         RenderableDiamondLattice)
+from renderables import (RenderableScene,
+                         RenderableOptionalModel, RenderableModelTransformer,
+                         RenderablePlanet, RenderableFloor,
+                         RenderableSphereImpostor, RenderableCylinderImpostor, RenderableDiamondLattice)
 
 from utilities.world import World
 
@@ -19,14 +20,17 @@ def make_scene(world: World) -> RenderableScene:
 
     scene = RenderableScene()
 
-    draw_floor = False
-    if draw_floor:
-        scene.add_model(
+    world.set_variable("floor_enabled", True)
+
+    scene.add_model(
+        RenderableOptionalModel(
             RenderableModelTransformer(
                 RenderableFloor(8.0, 8.0),
                 lambda: translate((0, 0, 0))
-            )
+            ),
+            lambda: world.get_variable("floor_enabled")
         )
+    )
 
     draw_earth = False
     if draw_earth:
@@ -50,7 +54,7 @@ def make_scene(world: World) -> RenderableScene:
         sphere_imposter_constellation.add_model(
             RenderableModelTransformer(
                 earth,
-                lambda: np.linalg.multi_dot(
+                lambda: multiply_matrices(
                     translate((+0.8, 0.0, 0)),
                     scale((1.0, 1.0, 1.0)),
                     rotate((0, 1, 0), 0 * world.time())
@@ -63,36 +67,36 @@ def make_scene(world: World) -> RenderableScene:
         sphere_imposter_constellation.add_model(
             RenderableModelTransformer(
                 moon,
-                lambda: np.linalg.multi_dot((
+                lambda: multiply_matrices(
                     translate((-0.8, 0.0, 0.3)),
                     scale((1.0, 1.0, 1.0)),
                     rotate((0, 1, 0), 0.0 * world.time())
-                ))
+                )
             )
         )
 
         scene.add_model(
             RenderableModelTransformer(
                 sphere_imposter_constellation,
-                lambda: np.linalg.multi_dot((
+                lambda: multiply_matrices(
                     rotate((0, 1, 0), 1.0 * world.time())
-                ))
+                )
             )
         )
 
-    draw_cylinder_impostor = False
+    draw_cylinder_impostor = True
     if draw_cylinder_impostor:
         cylinder_impostor = RenderableCylinderImpostor()
 
         scene.add_model(
             RenderableModelTransformer(
                 cylinder_impostor,
-                lambda: np.linalg.multidot((
+                lambda: multiply_matrices(
                     translate((+0.25, 0.0, 0)),
                     rotate((0, 1, 0), 0.0 * world.time()),
                     rotate((1, 0, 0), 0.5 * world.time()),
                     scale((0.2, 0.2, 4.0))
-                ))
+                )
             )
         )
 
@@ -101,18 +105,27 @@ def make_scene(world: World) -> RenderableScene:
         scene.add_model(
             RenderableModelTransformer(
                 sphere_impostor,
-                lambda: translate((+0.0, 0.0, 0)) @ scale((1.0, 1.0, 1.0)) @ rotate((0, 1, 0), 1 * world.time())
+                lambda: multiply_matrices(
+                    translate((+0.0, 0.0, 0)),
+                    scale((1.0, 1.0, 1.0)),
+                    rotate((0, 1, 0), 1 * world.time())
+                )
             )
         )
 
-    draw_diamond_impostor = True
+    draw_diamond_impostor = False
     if draw_diamond_impostor:
         diamond_lattice = RenderableDiamondLattice(name="diamond_lattice")
 
         scene.add_model(
             RenderableModelTransformer(
                 diamond_lattice,
-                lambda: translate((0, 0, 0)) @ rotate((1, 0, 0), 0.13 * world.time()) @ rotate((0, 0, 1), 0.11 * world.time()) @ rotate((0, 1, 0), 0.07 * world.time())
+                lambda: multiply_matrices(
+                    translate((0, 0, 0)),
+                    rotate((1, 0, 0), 0.13 * world.time()),
+                    rotate((0, 0, 1), 0.11 * world.time()),
+                    rotate((0, 1, 0), 0.07 * world.time())
+                )
             )
         )
 
@@ -215,7 +228,7 @@ class Application:
 
             # Make view matrix.
 
-            m_view = translate((0.0, 0, -self.render_distance)) @ rotate((0, 1, 0), world.time() * 0.0)
+            m_view = translate((0.0, -4.0, -self.render_distance)) @ rotate((0, 1, 0), world.time() * 0.0)
 
             # Make model matrix.
 
@@ -285,6 +298,8 @@ class Application:
                 case glfw.KEY_C:
                     if self._diamond_model is not None:
                         self._diamond_model.color_mode = (self._diamond_model.color_mode + 1) % 3
+                case glfw.KEY_F:
+                    self._world.set_variable("floor_enabled", not self._world.get_variable("floor_enabled"))
                 case glfw.KEY_I:
                     if self._diamond_model is not None:
                         self._diamond_model.impostor_mode = (self._diamond_model.impostor_mode + 1) % 2

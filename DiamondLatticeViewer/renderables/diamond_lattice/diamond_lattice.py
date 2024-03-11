@@ -135,6 +135,8 @@ class RenderableDiamondLattice(Renderable):
         self._color_mode_location = glGetUniformLocation(self._shader_program, "color_mode")
         self._impostor_mode_location = glGetUniformLocation(self._shader_program, "impostor_mode")
 
+        # Make vertex buffer data.
+
         vbo_data = make_diamond_lattice_unitcell_triangle_vertex_data()
 
         print("Diamond lattice unit cell size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(

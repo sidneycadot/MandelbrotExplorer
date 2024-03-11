@@ -149,3 +149,10 @@ def apply_transform_to_normals(m_xform: np.ndarray, normals: np.ndarray) -> np.n
         raise RuntimeError("normals are not unit length after normalization.")
 
     return normals
+
+
+def multiply_matrices(*args):
+    match len(args):
+        case 0: raise ValueError()
+        case 1: return args[0]
+        case _: return np.linalg.multi_dot(args)
