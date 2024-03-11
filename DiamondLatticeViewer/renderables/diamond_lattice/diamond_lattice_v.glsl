@@ -149,15 +149,6 @@ void main()
                 {
                     // Carbon atom (sphere).
                     vs_out.color = 0.2 + 0.9 * a_lattice_position / 3;
-
-                    //if ((a_lattice_position.x + a_lattice_position.y + a_lattice_position.z) % 4 == 0)
-                    //{
-                    //    vs_out.color = vec3(1.0, 0.0, 0.0);
-                    //}
-                    //else
-                    //{
-                    //    vs_out.color = vec3(1.0, 1.0, 0.0);
-                    //}
                 }
                 else
                 {
