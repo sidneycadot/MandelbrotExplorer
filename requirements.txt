@@ -1,0 +1,6 @@
+# Required packages.
+
+PyOpenGL
+glfw
+numpy
+Pillow
