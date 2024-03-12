@@ -1,4 +1,4 @@
-"""Construct geometric objects as lists of triangles."""
+"""Construct geometric 3D objects (spheres and cylinders)."""
 
 import numpy as np
 
@@ -33,7 +33,7 @@ def _make_unit_sphere_triangles_recursive(triangle, recursion_level: int) -> lis
 
 
 def make_unit_sphere_triangles_from_tetrahedron(recursion_level: int):
-    """Make unit sphere by subdividing a tetrahedron."""
+    """Make a triangulation of a unit sphere by subdividing a tetrahedron."""
 
     v1 = normalize((-1.0, -1.0, -1.0))
     v2 = normalize((+1.0, +1.0, -1.0))
@@ -56,10 +56,10 @@ def make_unit_sphere_triangles_from_tetrahedron(recursion_level: int):
 
 
 def make_unit_sphere_triangles(recursion_level: int):
-    """Make unit sphere by subdividing a dodecahedron."""
+    """Make a triangulation of a unit sphere by subdividing an icosahedron."""
 
-    # Note: distance of center of each face to the origin is  0.7946544722917661,
-    #   or sqrt((5+2*sqrt(5))/15).
+    # Note: the distance of the origin to the center of each face is sqrt((5+2*sqrt(5))/15),
+    # or approximately 0.7946544722917661.
 
     q = np.sqrt(5)
     r = np.sqrt((5 - q)/10)
@@ -97,7 +97,7 @@ def make_unit_sphere_triangles(recursion_level: int):
     return triangles
 
 
-def make_cylinder_triangles(subdivision_count: int, capped: bool):
+def make_unit_cylinder_triangles(subdivision_count: int, capped: bool):
     """Make a triangulation of a unit cylinder."""
 
     z_lo = -0.5

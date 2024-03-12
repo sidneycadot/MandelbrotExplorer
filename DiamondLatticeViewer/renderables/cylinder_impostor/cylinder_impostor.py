@@ -9,7 +9,7 @@ import numpy as np
 from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices, scale
 from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
-from utilities.geometry import make_cylinder_triangles
+from utilities.geometry import make_unit_cylinder_triangles
 
 from renderables.renderable import Renderable
 
@@ -19,7 +19,7 @@ def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
     if transformation_matrix is None:
         transformation_matrix = np.identity(4)
 
-    triangles = make_cylinder_triangles(subdivision_count=6, capped=True)
+    triangles = make_unit_cylinder_triangles(subdivision_count=6, capped=True)
 
     triangle_vertices = np.array(triangles).reshape(-1, 3)
 

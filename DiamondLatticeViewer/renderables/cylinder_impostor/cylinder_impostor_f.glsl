@@ -19,6 +19,9 @@ uniform mat4 transposed_inverse_view_matrix;
 uniform sampler2D my_texture;
 
 const float PI = 4 * atan(1);
+
+// Note: we don't use NaN as an invalid value because it somehow doesn't work correctly
+//   on a relatively modern nVidia card.
 const float INVALID = -1;
 
 const float ia = 0.2;
