@@ -4,7 +4,6 @@ import itertools
 import os
 
 import numpy as np
-from PIL import Image
 
 from utilities.matrices import translate, scale, apply_transform_to_vertices
 from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
@@ -15,12 +14,12 @@ from utilities.geometry import (make_unit_sphere_triangles, make_unit_cylinder_t
 from renderables.renderable import Renderable
 
 
-def in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
+def _in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
     """Return if a given integer (ix, iy, iz) coordinate is occupied in the diamond lattice."""
     return (ix % 2 == iy % 2 == iz % 2) and (ix + iy + iz) % 4 < 2
 
 
-def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=None):
+def _make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=None):
     """Define triangles for the sphere and cylinder impostors that we will upload to the VBO."""
 
     if transformation_matrix is None:
@@ -55,7 +54,7 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
     cylinder_impostor_scale_matrix = scale((1.1, 1.1, 1.01))
 
     for (ix, iy, iz) in itertools.product(range(4), repeat=3):
-        if in_diamond_lattice(ix, iy, iz):
+        if _in_diamond_lattice(ix, iy, iz):
 
             # Add triangles for a single Carbon sphere.
 
@@ -85,7 +84,7 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
                 if max(jx, jy, jz) > 3:
                     continue
 
-                if in_diamond_lattice(jx, jy, jz):
+                if _in_diamond_lattice(jx, jy, jz):
 
                     # Add triangles for a single Carbon-Carbon bond cylinder.
 
@@ -164,7 +163,7 @@ class RenderableDiamondLattice(Renderable):
 
         # Make vertex buffer data.
 
-        vbo_data = make_diamond_lattice_unitcell_triangle_vertex_data()
+        vbo_data = _make_diamond_lattice_unitcell_triangle_vertex_data()
 
         print("Diamond lattice unit cell size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(
             vbo_data.size // 3, vbo_data.size, vbo_data.nbytes, vbo_data.itemsize))
@@ -191,26 +190,6 @@ class RenderableDiamondLattice(Renderable):
 
         # Unbind VBO.
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-
-        # Make texture.
-
-        # texture_filename = "smiley.png"
-
-        # self._texture = glGenTextures(1)
-        # glBindTexture(GL_TEXTURE_2D, self._texture)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-        # texture_image_path = os.path.join(os.path.dirname(__file__), texture_filename)
-
-        #with Image.open(texture_image_path) as im:
-        #    im = im.convert('RGB')
-        #    image = np.array(im)
-
-        #glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.shape[1], image.shape[0], 0, GL_RGB, GL_UNSIGNED_BYTE, image)
-        #glGenerateMipmap(GL_TEXTURE_2D)
 
     def close(self):
 

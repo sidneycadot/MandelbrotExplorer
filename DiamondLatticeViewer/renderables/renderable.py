@@ -7,3 +7,7 @@ class Renderable:
     def render(self, projection_matrix, view_matrix, model_matrix):
         """Must be implemented by derived classes."""
         raise NotImplementedError()
+
+    def close(self) -> None:
+        """Must be implemented by derived classes."""
+        raise NotImplementedError()

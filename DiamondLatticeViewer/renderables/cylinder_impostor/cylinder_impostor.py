@@ -14,7 +14,7 @@ from utilities.geometry import make_unit_cylinder_triangles
 from renderables.renderable import Renderable
 
 
-def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
+def _make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
 
     if transformation_matrix is None:
         transformation_matrix = np.identity(4)
@@ -71,7 +71,7 @@ class RenderableCylinderImpostor(Renderable):
 
         # Make vertex buffer data.
 
-        vbo_data = make_cylinder_impostor_triangle_vertex_data(m_xform)
+        vbo_data = _make_cylinder_impostor_triangle_vertex_data(m_xform)
 
         print("Cylinder impostor size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(
             vbo_data.size // 3, vbo_data.size, vbo_data.nbytes, vbo_data.itemsize))

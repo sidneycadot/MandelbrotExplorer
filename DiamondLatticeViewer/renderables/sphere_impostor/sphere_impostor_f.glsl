@@ -43,12 +43,11 @@ float intersect_unit_sphere(vec3 origin, vec3 direction)
     float uu = dot(direction, direction);
     float discriminant = uo*uo - uu * (oo - 1);
 
-    // Early abort if a solution does not exist.
-    // This check can be omitted, but it is adventageous to keep it for improved performance.
     if (discriminant < 0)
     {
         return INVALID;
     }
+
     return (-uo - sqrt(discriminant)) / uu;
 }
 
