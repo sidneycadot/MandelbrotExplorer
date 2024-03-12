@@ -19,6 +19,9 @@ uniform mat4 transposed_inverse_view_matrix;
 uniform sampler2D my_texture;
 
 const float PI = 4 * atan(1);
+
+// Note: we don't use NaN as an invalid value because it somehow doesn't work correctly
+//   on a relatively modern nVidia card.
 const float INVALID = -1;
 
 const float ia = 0.2;
@@ -39,12 +42,11 @@ float intersect_unit_cylinder(vec2 origin, vec2 direction)
     float uu = dot(direction, direction);
     float discriminant = uo*uo - uu * (oo - 1);
 
-    // Early abort if a solution does not exist.
-    // This check can be omitted, but it is adventageous to keep it for improved performance.
     if (discriminant < 0)
     {
         return INVALID;
     }
+
     return (-uo - sqrt(discriminant)) / uu;
 }
 

@@ -21,8 +21,8 @@ uniform uint color_mode;
 out VS_OUT {
     vec3 mv_surface;
     vec3 color;
-    flat mat4x4 modelview_to_object_space_matrix;
-    flat mat4x4 object_to_projection_space_matrix;
+    flat mat4 modelview_to_object_space_matrix;
+    flat mat4 object_to_projection_space_matrix;
     flat int object_type; // 0 == sphere, 1 == cylinder.
 } vs_out;
 

@@ -1,12 +1,10 @@
 """This module implements the RenderableScene class."""
 
-from typing import Optional
-
-from renderables.renderable import Renderable
+from ..renderable import Renderable
 
 
 class RenderableScene(Renderable):
-    """A collection of renderable models."""
+    """A collection of renderable objects."""
 
     def __init__(self):
         self._models = []
@@ -14,9 +12,8 @@ class RenderableScene(Renderable):
     def close(self) -> None:
         for model in self._models:
             model.close()
-        self._models.clear()
 
-    def add_model(self, model: Renderable):
+    def add_model(self, model: Renderable) -> None:
         self._models.append(model)
 
     def render(self, projection_matrix, model_matrix, view_matrix) -> None:

@@ -1,6 +1,5 @@
 """This module implements the RenderableCylinderImpostor class."""
 
-import ctypes
 import os
 
 from PIL import Image
@@ -9,18 +8,18 @@ import numpy as np
 
 from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices, scale
-from utilities.opengl_utilities import create_opengl_program
-from utilities.geometry import make_cylinder_triangles
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
+from utilities.geometry import make_unit_cylinder_triangles
 
 from renderables.renderable import Renderable
 
 
-def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
+def _make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
 
     if transformation_matrix is None:
         transformation_matrix = np.identity(4)
 
-    triangles = make_cylinder_triangles(subdivision_count=6, capped=True)
+    triangles = make_unit_cylinder_triangles(subdivision_count=6, capped=True)
 
     triangle_vertices = np.array(triangles).reshape(-1, 3)
 
@@ -72,7 +71,7 @@ class RenderableCylinderImpostor(Renderable):
 
         # Make vertex buffer data.
 
-        vbo_data = make_cylinder_impostor_triangle_vertex_data(m_xform)
+        vbo_data = _make_cylinder_impostor_triangle_vertex_data(m_xform)
 
         print("Cylinder impostor size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(
             vbo_data.size // 3, vbo_data.size, vbo_data.nbytes, vbo_data.itemsize))
@@ -101,11 +100,8 @@ class RenderableCylinderImpostor(Renderable):
         self._vao = glGenVertexArrays(1)
         glBindVertexArray(self._vao)
 
-        # Defines the attribute with index 0 in the current VAO.
-
-        attribute_index = 0  # 3D vertex coordinates
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
-        glEnableVertexAttribArray(attribute_index)
+        # Define attributes based on the vbo_data element type and enable them.
+        define_vertex_attributes(vbo_data.dtype, True)
 
         # Unbind VAO
         glBindVertexArray(0)

@@ -8,8 +8,8 @@ uniform uint impostor_mode;
 in VS_OUT {
     vec3 mv_surface;
     vec3 color;
-    flat mat4x4 modelview_to_object_space_matrix;
-    flat mat4x4 object_to_projection_space_matrix;
+    flat mat4 modelview_to_object_space_matrix;
+    flat mat4 object_to_projection_space_matrix;
     flat int object_type; // 0 == sphere, 1 == cylinder.
 } fs_in;
 
@@ -26,7 +26,10 @@ const vec3 m_lightsource1_direction = normalize(vec3(+1, 1, 1));
 
 uniform sampler2D my_texture;
 
+// Note: we don't use NaN as an invalid value because it somehow doesn't work correctly
+//   on a relatively modern nVidia card.
 const float INVALID = -1.0;
+
 const float PI = 4 * atan(1);
 
 float intersect_unit_sphere(vec3 origin, vec3 direction)
@@ -40,12 +43,11 @@ float intersect_unit_sphere(vec3 origin, vec3 direction)
     float uu = dot(direction, direction);
     float discriminant = uo*uo - uu * (oo - 1);
 
-    // Early abort if a solution does not exist.
-    // This check can be omitted, but it is adventageous to keep it for improved performance.
     if (discriminant < 0)
     {
         return INVALID;
     }
+
     return (-uo - sqrt(discriminant)) / uu;
 }
 
@@ -54,19 +56,18 @@ float intersect_unit_cylinder(vec2 origin, vec2 direction)
     // See: https://en.wikipedia.org/wiki/Line–sphere_intersection
     //
     // Find smallest real alpha such that: origin + alpha * direction is on the unit cylinder.
-    // The unit-cylinder stretched for -inf to +inf in the Z direction.
+    // The unit-cylinder stretched from -inf to +inf in the Z direction.
     //
     float oo = dot(origin, origin);
     float uo = dot(direction, origin);
     float uu = dot(direction, direction);
     float discriminant = uo*uo - uu * (oo - 1);
 
-    // Early abort if a solution does not exist.
-    // This check can be omitted, but it is adventageous to keep it for improved performance.
     if (discriminant < 0)
     {
         return INVALID;
     }
+
     return (-uo - sqrt(discriminant)) / uu;
 }
 
@@ -135,14 +136,6 @@ void main()
 
     float contrib_d1 = max(0.0, dot(mv_lightsource1_direction, mv_surface_normal));
     float contrib_s1 = pow(max(0.0, dot(mv_lightsource1_reflection_direction, mv_viewer_direction)), phong_alpha);
-
-    if (fs_in.object_type == 2)
-    {
-        float u = 0.5 + 0.5 * atan(object_hit.x, object_hit.z) / PI;
-        float v = 0.5 - 0.5 * object_hit.y;
-
-        k_material *= texture(my_texture, vec2(u, v)).xyz;
-    }
 
     vec3 phong_color = k_material * (ia + id1 * contrib_d1 + is1 * contrib_s1);
 

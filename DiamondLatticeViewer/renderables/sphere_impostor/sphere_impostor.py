@@ -1,7 +1,6 @@
 """This module implements the RenderableSphereImpostor class."""
 
 import os
-import ctypes
 
 from PIL import Image
 
@@ -10,11 +9,11 @@ import numpy as np
 from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices, scale
 from renderables.renderable import Renderable
-from utilities.opengl_utilities import create_opengl_program
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
 from utilities.geometry import make_unit_sphere_triangles
 
 
-def make_sphere_impostor_triangle_vertex_data(transformation_matrix=None):
+def _make_sphere_impostor_triangle_vertex_data(transformation_matrix=None):
 
     if transformation_matrix is None:
         transformation_matrix = np.identity(4)
@@ -62,7 +61,7 @@ class RenderableSphereImpostor(Renderable):
 
         # Make vertex buffer data.
 
-        vbo_data = make_sphere_impostor_triangle_vertex_data(m_xform)
+        vbo_data = _make_sphere_impostor_triangle_vertex_data(m_xform)
 
         print("Sphere impostor size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(
             vbo_data.size // 3, vbo_data.size, vbo_data.nbytes, vbo_data.itemsize))
@@ -99,11 +98,8 @@ class RenderableSphereImpostor(Renderable):
         self._vao = glGenVertexArrays(1)
         glBindVertexArray(self._vao)
 
-        # Defines the attribute with index 0 in the current VAO.
-
-        attribute_index = 0  # 3D vertex coordinates
-        glVertexAttribPointer(attribute_index, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
-        glEnableVertexAttribArray(attribute_index)
+        # Define attributes based on the vbo_data element type and enable them.
+        define_vertex_attributes(vbo_data.dtype, True)
 
         # Unbind VAO
         glBindVertexArray(0)
