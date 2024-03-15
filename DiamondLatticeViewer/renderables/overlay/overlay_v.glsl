@@ -18,16 +18,22 @@ void main()
 
     uvec2 texture_size = textureSize(overlay_texture, 0);
 
-    //   clipspace.x = vertex.x * texture_size.x / window_size.x
-    //   clipspace.y = vertex.y * texture_size.y / window_size.y
-    //
     //   texture.x = 0.5 + 0.5 * vertex.x;
     //   texture.y = 0.5 - 0.5 * vertex.y;
 
     vs_out.overlay_texture_coordinate = vec2(0.5 + 0.5 * a_vertex.x, 0.5 - 0.5 * a_vertex.y);
 
-    gl_Position = vec4(a_vertex * texture_size / frame_buffer_size,
-                       0.0,
-                       1.0
-                      );
+    //   clipspace.x = vertex.x * texture_size.x / frame_buffer_size.x + offset_x
+    //   -1 --> -1
+    //   +1 --> -1 +
+    //   clipspace.y = vertex.y * texture_size.y / frame_buffer_size.y
+
+
+    float offset_x = 1 - float(texture_size.x) / frame_buffer_size.x;
+    float offset_y = 1 - float(texture_size.y) / frame_buffer_size.y;
+
+    gl_Position = vec4(
+        a_vertex.x * texture_size.x / frame_buffer_size.x + offset_x,
+        a_vertex.y * texture_size.y / frame_buffer_size.y - offset_y, 0.0, 1.0
+    );
 }

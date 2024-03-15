@@ -318,7 +318,7 @@ class Application:
         frame_counter = 0
         t_previous_wallclock = None
 
-        glfw.swap_interval(1)
+        glfw.swap_interval(0)
 
         glPointSize(1)
         glClearColor(0.12, 0.12, 0.12, 1.0)

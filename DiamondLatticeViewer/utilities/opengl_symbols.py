@@ -85,6 +85,7 @@ from OpenGL.GL import (
     glTexParameteri,
     glBindTexture,
     glTexImage2D,
+    glTexSubImage2D,
     glGenerateMipmap,
     glDrawArrays,
     glPointSize,

@@ -40,6 +40,14 @@ class RenderableOverlay(Renderable):
         self._world = world
         self._last_text = None
 
+        font_source_path = os.path.join(os.path.dirname(__file__), "Monoid-Regular.ttf")
+        font_size = 12
+
+        self._font = ImageFont.truetype(font_source_path, font_size)
+        self._texture_background = (40, 70, 200, 64)
+        self._texture_image = Image.new("RGBA", (300, 60), self._texture_background)
+        self._texture_draw = ImageDraw.Draw(self._texture_image)
+
         # Compile the shader program.
 
         shader_source_path = os.path.join(os.path.dirname(__file__), "overlay")
@@ -47,23 +55,14 @@ class RenderableOverlay(Renderable):
 
         # Find the location of uniform shader program variables.
 
-        #self._model_matrix_location = glGetUniformLocation(self._shader_program, "model_matrix")
-        #self._view_matrix_location = glGetUniformLocation(self._shader_program, "view_matrix")
-        #self._projection_matrix_location = glGetUniformLocation(self._shader_program, "projection_matrix")
-
-        #self._view_model_matrix_location = glGetUniformLocation(self._shader_program, "view_model_matrix")
         self._frame_buffer_size_location = glGetUniformLocation(self._shader_program, "frame_buffer_size")
         self._projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "projection_view_model_matrix")
-        #self._inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "inverse_view_model_matrix")
-        #self._transposed_inverse_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_matrix")
-        #self._transposed_inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_model_matrix")
-        #self._transposed_inverse_projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_projection_view_model_matrix")
 
         # Make vertex buffer data.
 
         vbo_data = make_overlay_vertex_data()
 
-        print("Sphere impostor size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(
+        print("Overlay size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(
             vbo_data.size // 3, vbo_data.size, vbo_data.nbytes, vbo_data.itemsize))
 
         self._vertex_count = vbo_data.size
@@ -77,16 +76,11 @@ class RenderableOverlay(Renderable):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        #glBindTexture(GL_TEXTURE_2D, self._texture)
-        #with Image.new("RGBA", (512, 256), "red") as im:
-        #    draw = ImageDraw.Draw(im)
-        #    draw.ellipse(((100, 100), (200, 200)), fill='yellow', outline='blue', width=5)
-        #    with Image.new("L", (512, 256), "black") as im_alpha:
-        #        draw = ImageDraw.Draw(im_alpha)
-        #        draw.ellipse(((150, 150), (250, 250)), fill='black', outline='white', width=5)
-        #        im.putalpha(im_alpha)
-        #        # Convert to numpy array
-        #    image = np.array(im)
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGBA,
+            self._texture_image.size[0], self._texture_image.size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE,
+            self._texture_image.tobytes()
+        )
 
         #glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.shape[1], image.shape[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
         #glGenerateMipmap(GL_TEXTURE_2D)
@@ -160,12 +154,17 @@ class RenderableOverlay(Renderable):
         )
 
         if text != self._last_text:
-            font = ImageFont.load_default(size=16.0)
-            with Image.new("RGBA", (framebuffer_width, framebuffer_height), (255, 255, 255, 0)) as im:
-                draw = ImageDraw.Draw(im)
-                draw.multiline_text((10, 4), text, font=font, fill='yellow')
-                image = np.array(im)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.shape[1], image.shape[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+            self._texture_image.paste(
+                self._texture_background,
+                (0, 0, self._texture_image.size[0], self._texture_image.size[1])
+            )
+            self._texture_draw.multiline_text((10, 4), text, font=self._font, fill='yellow')
+            glTexSubImage2D(
+                GL_TEXTURE_2D, 0,
+                0, 0,
+                self._texture_image.size[0], self._texture_image.size[1],
+                GL_RGBA, GL_UNSIGNED_BYTE, self._texture_image.tobytes()
+            )
 
         glUniform2ui(self._frame_buffer_size_location, framebuffer_width, framebuffer_height)
 
