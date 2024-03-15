@@ -49,6 +49,7 @@ from OpenGL.GL import (
     GL_FRAGMENT_SHADER,
     GL_LINK_STATUS,
     GL_R8,
+    GL_MULTISAMPLE,
 
     # OpenGL functions.
 
