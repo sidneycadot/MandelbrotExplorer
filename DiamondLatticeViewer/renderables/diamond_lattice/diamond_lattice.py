@@ -51,7 +51,7 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
     vbo_data_list = []
 
     sphere_impostor_scale_matrix = scale(1.26)
-    cylinder_impostor_scale_matrix = scale((1.1, 1.1, 1.01))
+    cylinder_impostor_scale_matrix = scale((1.2, 1.2, 1.01))
 
     for (ix, iy, iz) in itertools.product(range(4), repeat=3):
         if in_diamond_lattice(ix, iy, iz):
