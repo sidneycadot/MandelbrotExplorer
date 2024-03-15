@@ -133,11 +133,13 @@ class UserInteractionHandler:
 
 class DefaultUserInteractionHandler(UserInteractionHandler):
 
-    def __init__(self, world):
+    def __init__(self, app, world):
+        self._app = app
         self._world = world
 
     def process_keyboard_event(self, window, key: int, _scancode: int, action: int, mods: int):
 
+        app = self._app
         world = self._world
 
         if action in (glfw.PRESS, glfw.REPEAT):
@@ -180,6 +182,8 @@ class DefaultUserInteractionHandler(UserInteractionHandler):
                     diamond_lattice_enabled = not diamond_lattice_enabled
                     world.set_variable("diamond_lattice_enabled", diamond_lattice_enabled)
                 case glfw.KEY_F:
+                    app.toggle_fullscreen(window)
+                case glfw.KEY_L:
                     floor_enabled = world.get_variable("floor_enabled")
                     floor_enabled = not floor_enabled
                     world.set_variable("floor_enabled", floor_enabled)
@@ -212,6 +216,7 @@ class Application:
 
     def __init__(self):
         self._user_interaction_handler = None
+        self._window_position_and_size = None
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int):
@@ -226,23 +231,35 @@ class Application:
 
         # Create the window.
 
-        use_secondary_monitor = False
-        if use_secondary_monitor:
-            monitors = glfw.get_monitors()
-            monitor = monitors[-1]
+        monitor = glfw.get_primary_monitor()
+        current_mode = glfw.get_video_mode(monitor)
 
-            modes = glfw.get_video_modes(monitor)
-            for mode in modes:
-                print("mode:", mode.size, mode.bits, mode.refresh_rate)
-
-            window = glfw.create_window(3840, 2160, "DiamondViewer", monitor, None)
-        else:
-            window = glfw.create_window(640, 480, "DiamondViewer", None, None)
+        width = 640
+        height = 480
+        window = glfw.create_window(width, height, "DiamondViewer", None, None)
 
         if not window:
             raise RuntimeError("Unable to create window using GLFW.")
 
         return window
+
+    def toggle_fullscreen(self, window):
+        monitor = glfw.get_window_monitor(window)
+        if monitor:
+            # The window is a fullscreen window on the given monitor.
+            # Switch to non-fullscreen mode.
+            # Note: the refresh rate is ignored when no monitor is specified.
+            (xpos, ypos, width, height) = self._window_position_and_size
+            glfw.set_window_monitor(window, None, xpos, ypos, width, height, 0)
+        else:
+            # The window is a regular window.
+            # Make it a fullscreen window.
+            monitor = glfw.get_primary_monitor()
+            current_mode = glfw.get_video_mode(monitor)
+            (xpos, ypos) = glfw.get_window_pos(window)
+            (width, height) = glfw.get_window_size(window)
+            self._window_position_and_size = (xpos, ypos, width, height)
+            glfw.set_window_monitor(window, monitor, 0, 0, current_mode.size.width, current_mode.size.height, current_mode.refresh_rate)
 
     def run(self):
 
@@ -266,7 +283,7 @@ class Application:
 
         world.set_variable("render_distance", 60.0)
 
-        self._user_interaction_handler = DefaultUserInteractionHandler(world)
+        self._user_interaction_handler = DefaultUserInteractionHandler(self, world)
 
         scene = make_scene(world)
 
@@ -280,6 +297,7 @@ class Application:
         glPointSize(1)
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
+        #glEnable(GL_MULTISAMPLE)
 
         glEnable(GL_CULL_FACE)
         glCullFace(GL_BACK)
