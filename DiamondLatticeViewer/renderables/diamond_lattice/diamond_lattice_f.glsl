@@ -131,12 +131,12 @@ void main()
     float new_frag_depth =  0.5 + 0.5 *  (projection.z / projection.w);
     //float new_frag_depth = (projection.z / projection.w);
 
-    if (!(new_frag_depth > gl_FragCoord.z))
+    if (!(new_frag_depth >= gl_FragCoord.z))
     {
-        // This can happen at the clip plane.
-        fragment_color = vec4(1, 0, 0, 1);
-        return;
-        //discard;
+        // This shouldn't happen, but it just did. We discard this fragment.
+        //fragment_color = vec4(1, 0, 0, 1);
+        //return;
+        discard;
     }
 
     gl_FragDepth = new_frag_depth;
