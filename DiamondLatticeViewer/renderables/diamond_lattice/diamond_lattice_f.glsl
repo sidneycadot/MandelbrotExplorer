@@ -129,13 +129,14 @@ void main()
     vec4 projection = fs_in.object_to_projection_space_matrix * vec4(object_hit, 1);
 
     float new_frag_depth =  0.5 + 0.5 *  (projection.z / projection.w);
+    //float new_frag_depth = (projection.z / projection.w);
 
-    if (!(new_frag_depth >= gl_FragDepth))
+    if (!(new_frag_depth > gl_FragCoord.z))
     {
         // This can happen at the clip plane.
-        //fragment_color = vec4(1, 0, 0, 1);
-        //return;
-        discard;
+        fragment_color = vec4(1, 0, 0, 1);
+        return;
+        //discard;
     }
 
     gl_FragDepth = new_frag_depth;
