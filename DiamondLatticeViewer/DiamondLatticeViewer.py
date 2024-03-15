@@ -125,8 +125,7 @@ def make_scene(world: World) -> RenderableScene:
         )
     )
 
-    overlay = RenderableOverlay("earth.png")
-    world.set_variable("overlay", overlay)
+    overlay = RenderableOverlay(world)
 
     world.set_variable("overlay_enabled", True)
     scene.add_model(
@@ -304,8 +303,11 @@ class Application:
         glfw.make_context_current(window)
 
         world = World()
+        self._world = world
 
         world.set_variable("render_distance", 60.0)
+        (framebuffer_width, framebuffer_height) = glfw.get_framebuffer_size(window)
+        world.set_variable("framebuffer_size", (framebuffer_width, framebuffer_height))
 
         self._user_interaction_handler = UserInteractionHandler(self, world)
 
@@ -327,9 +329,11 @@ class Application:
 
         fov_degrees = 30.0
         near_plane = 0.5
-        far_plane = 1000.0
+        far_plane = 10000.0
 
         num_report_frames = 100
+
+        world.set_variable("ms_per_frame", np.nan)
 
         while not glfw.window_should_close(window):
 
@@ -337,7 +341,7 @@ class Application:
             if frame_counter % num_report_frames == 0:
                 if t_previous_wallclock is not None:
                     frame_duration = (t_wallclock - t_previous_wallclock) / num_report_frames
-                    print("@@ {:20.4f} ms per frame".format(frame_duration * 1000.0))
+                    world.set_variable("ms_per_frame", frame_duration * 1000.0)
                 t_previous_wallclock = t_wallclock
 
             # Sample world time.
@@ -383,10 +387,10 @@ class Application:
         glfw.destroy_window(window)
         glfw.terminate()
 
-    @staticmethod
-    def framebuffer_size_callback(_window, width, height):
+    def framebuffer_size_callback(self, _window, width, height):
         print("Resizing framebuffer:", width, height)
         glViewport(0, 0, width, height)
+        self._world.set_variable("framebuffer_size", (width, height))
 
     def key_callback(self, window, key: int, scancode: int, action: int, mods: int):
         if self._user_interaction_handler is not None:

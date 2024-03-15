@@ -55,4 +55,4 @@ class World:
         self._variables[name] = value
 
     def get_variable(self, name):
-        return self._variables[name]
+        return self._variables.get(name)

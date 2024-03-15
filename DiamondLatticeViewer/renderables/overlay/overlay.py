@@ -2,7 +2,7 @@
 
 import os
 
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageFont
 
 import numpy as np
 
@@ -35,7 +35,10 @@ def make_overlay_vertex_data():
 
 class RenderableOverlay(Renderable):
 
-    def __init__(self, texture_filename: str):
+    def __init__(self, world):
+
+        self._world = world
+        self._last_text = None
 
         # Compile the shader program.
 
@@ -49,6 +52,7 @@ class RenderableOverlay(Renderable):
         #self._projection_matrix_location = glGetUniformLocation(self._shader_program, "projection_matrix")
 
         #self._view_model_matrix_location = glGetUniformLocation(self._shader_program, "view_model_matrix")
+        self._frame_buffer_size_location = glGetUniformLocation(self._shader_program, "frame_buffer_size")
         self._projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "projection_view_model_matrix")
         #self._inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "inverse_view_model_matrix")
         #self._transposed_inverse_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_matrix")
@@ -73,21 +77,19 @@ class RenderableOverlay(Renderable):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        texture_image_path = os.path.join(os.path.dirname(__file__), texture_filename)
+        #glBindTexture(GL_TEXTURE_2D, self._texture)
+        #with Image.new("RGBA", (512, 256), "red") as im:
+        #    draw = ImageDraw.Draw(im)
+        #    draw.ellipse(((100, 100), (200, 200)), fill='yellow', outline='blue', width=5)
+        #    with Image.new("L", (512, 256), "black") as im_alpha:
+        #        draw = ImageDraw.Draw(im_alpha)
+        #        draw.ellipse(((150, 150), (250, 250)), fill='black', outline='white', width=5)
+        #        im.putalpha(im_alpha)
+        #        # Convert to numpy array
+        #    image = np.array(im)
 
-        with Image.new("RGBA", (512, 256), "red") as im:
-            draw = ImageDraw.Draw(im)
-            draw.ellipse(((100, 100), (200, 200)), fill='yellow', outline='blue', width=5)
-            with Image.new("L", (512, 256), "black") as im_alpha:
-                draw = ImageDraw.Draw(im_alpha)
-                draw.ellipse(((150, 150), (250, 250)), fill='black', outline='white', width=5)
-                im.putalpha(im_alpha)
-                # Convert to numpy array
-            image = np.array(im)
-            print(image.shape, image.dtype)
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.shape[1], image.shape[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
-        glGenerateMipmap(GL_TEXTURE_2D)
+        #glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.shape[1], image.shape[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+        #glGenerateMipmap(GL_TEXTURE_2D)
 
         # Make Vertex Buffer Object (VBO)
 
@@ -132,6 +134,8 @@ class RenderableOverlay(Renderable):
 
     def render(self, projection_matrix, view_matrix, model_matrix):
 
+        world = self._world
+
         glUseProgram(self._shader_program)
 
         #glUniformMatrix4fv(self._model_matrix_location, 1, GL_TRUE, model_matrix.astype(np.float32))
@@ -145,7 +149,26 @@ class RenderableOverlay(Renderable):
         #glUniformMatrix4fv(self._transposed_inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).T.astype(np.float32))
         #glUniformMatrix4fv(self._transposed_inverse_projection_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(projection_matrix @ view_matrix @ model_matrix).T.astype(np.float32))
 
+        (framebuffer_width, framebuffer_height) = world.get_variable("framebuffer_size")
+
         glBindTexture(GL_TEXTURE_2D, self._texture)
+
+        text = "render distance: {}\nframebuffer size: {}\nrender time per frame: {:.3f} ms".format(
+            world.get_variable("render_distance"),
+            (framebuffer_width, framebuffer_height),
+            world.get_variable("ms_per_frame")
+        )
+
+        if text != self._last_text:
+            font = ImageFont.load_default(size=16.0)
+            with Image.new("RGBA", (framebuffer_width, framebuffer_height), (255, 255, 255, 0)) as im:
+                draw = ImageDraw.Draw(im)
+                draw.multiline_text((10, 4), text, font=font, fill='yellow')
+                image = np.array(im)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.shape[1], image.shape[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+
+        glUniform2ui(self._frame_buffer_size_location, framebuffer_width, framebuffer_height)
+
         glBindVertexArray(self._vao)
 
         glEnable(GL_CULL_FACE)

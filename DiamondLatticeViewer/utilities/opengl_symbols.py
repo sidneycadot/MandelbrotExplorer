@@ -75,7 +75,7 @@ from OpenGL.GL import (
     glBindVertexArray,
     glEnable, glDisable,
     glUseProgram,
-    glUniform1f, glUniform1ui, glUniformMatrix4fv,
+    glUniform1f, glUniform1ui, glUniform2ui, glUniformMatrix4fv,
     glDrawArraysInstanced,
     glDeleteVertexArrays,
     glDeleteBuffers,
