@@ -18,7 +18,11 @@ in VS_OUT {
 } fs_in;
 
 #ifdef GL_ARB_conservative_depth
-layout (depth_greater) out float gl_FragDepth;
+// Turns out, "depth_greater" shows visual artefacts!!
+// Strange; I don't really understand why that is.
+// We disable this for the time being.
+//
+// layout (depth_greater) out float gl_FragDepth;
 #endif
 
 layout(location = 0) out vec4 fragment_color;
@@ -124,7 +128,17 @@ void main()
 
     vec4 projection = fs_in.object_to_projection_space_matrix * vec4(object_hit, 1);
 
-    gl_FragDepth = 0.5 + 0.5 *  (projection.z / projection.w);
+    float new_frag_depth =  0.5 + 0.5 *  (projection.z / projection.w);
+
+    if (!(new_frag_depth >= gl_FragDepth))
+    {
+        // This can happen at the clip plane.
+        //fragment_color = vec4(1, 0, 0, 1);
+        //return;
+        discard;
+    }
+
+    gl_FragDepth = new_frag_depth;
 
     vec3 object_normal = (fs_in.object_type == 0) ? object_hit : vec3(object_hit.xy, 0);
 
