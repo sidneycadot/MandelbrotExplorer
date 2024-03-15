@@ -1,6 +1,5 @@
 """This module implements the World class."""
 
-
 from typing import Any
 
 import glfw
