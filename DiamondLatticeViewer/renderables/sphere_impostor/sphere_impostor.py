@@ -13,7 +13,7 @@ from utilities.opengl_utilities import create_opengl_program, define_vertex_attr
 from utilities.geometry import make_unit_sphere_triangles
 
 
-def _make_sphere_impostor_triangle_vertex_data(transformation_matrix=None):
+def make_sphere_impostor_triangle_vertex_data(transformation_matrix=None):
 
     if transformation_matrix is None:
         transformation_matrix = np.identity(4)
@@ -61,7 +61,7 @@ class RenderableSphereImpostor(Renderable):
 
         # Make vertex buffer data.
 
-        vbo_data = _make_sphere_impostor_triangle_vertex_data(m_xform)
+        vbo_data = make_sphere_impostor_triangle_vertex_data(m_xform)
 
         print("Sphere impostor size: {} triangles, {} vertices, {} bytes ({} bytes per triangle).".format(
             vbo_data.size // 3, vbo_data.size, vbo_data.nbytes, vbo_data.itemsize))

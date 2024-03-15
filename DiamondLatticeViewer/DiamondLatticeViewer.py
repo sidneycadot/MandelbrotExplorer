@@ -8,7 +8,8 @@ from utilities.opengl_symbols import *
 from utilities.matrices import translate, rotate, scale, perspective_projection, multiply_matrices
 
 from renderables import (RenderableScene, RenderableOptionalModel, RenderableModelTransformer, RenderableFloor,
-                         RenderableSphereImpostor, RenderableCylinderImpostor, RenderableDiamondLattice)
+                         RenderableSphereImpostor, RenderableCylinderImpostor, RenderableDiamondLattice,
+                         RenderableOverlay)
 
 from utilities.world import World
 
@@ -124,6 +125,17 @@ def make_scene(world: World) -> RenderableScene:
         )
     )
 
+    overlay = RenderableOverlay("earth.png")
+    world.set_variable("overlay", overlay)
+
+    world.set_variable("overlay_enabled", True)
+    scene.add_model(
+        RenderableOptionalModel(
+            overlay,
+            lambda: world.get_variable("overlay_enabled")
+        )
+    )
+
     return scene
 
 
@@ -183,6 +195,10 @@ class UserInteractionHandler:
                     floor_enabled = world.get_variable("floor_enabled")
                     floor_enabled = not floor_enabled
                     world.set_variable("floor_enabled", floor_enabled)
+                case glfw.KEY_O:
+                    overlay_enabled = world.get_variable("overlay_enabled")
+                    overlay_enabled = not overlay_enabled
+                    world.set_variable("overlay_enabled", overlay_enabled)
                 case glfw.KEY_I:
                     diamond_lattice = world.get_variable("diamond_lattice")
                     diamond_lattice.impostor_mode = (diamond_lattice.impostor_mode + 1) % 2

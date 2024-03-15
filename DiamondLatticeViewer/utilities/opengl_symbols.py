@@ -49,7 +49,11 @@ from OpenGL.GL import (
     GL_FRAGMENT_SHADER,
     GL_LINK_STATUS,
     GL_R8,
+    GL_RGBA,
+    GL_BLEND,
     GL_MULTISAMPLE,
+    GL_SRC_ALPHA,
+    GL_ONE_MINUS_SRC_ALPHA,
 
     # OpenGL functions.
 
@@ -89,5 +93,6 @@ from OpenGL.GL import (
     glClear,
     glViewport,
     glGetShaderInfoLog,
-    glGetProgramInfoLog
+    glGetProgramInfoLog,
+    glBlendFunc
 )

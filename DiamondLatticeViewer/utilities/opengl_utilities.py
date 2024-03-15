@@ -92,16 +92,20 @@ def define_vertex_attributes(vbo_dtype, enable_flag: bool):
 
         field_sub_dtype = field_dtype.subdtype
         if field_sub_dtype is None:
-            raise RuntimeError("Expected array dtype")
+            # The field is a simple type, not an array.
+            print("@@@", field_dtype)
+            field_item_dtype = field_dtype
+            field_element_count = 1
+        else:
+            # The field is an array.
+            (field_item_dtype, field_shape) = field_sub_dtype
 
-        (field_item_dtype, field_shape) = field_sub_dtype
+            if len(field_shape) != 1:
+                raise RuntimeError("Expected shape with 1 element.")
 
-        if len(field_shape) != 1:
-            raise RuntimeError("Expected shape with 1 element.")
-
-        field_element_count = field_shape[0]
-        if not (1 <= field_element_count <= 4):
-            raise RuntimeError("Bad number of elements.")
+            field_element_count = field_shape[0]
+            if not (1 <= field_element_count <= 4):
+                raise RuntimeError("Bad number of elements.")
 
         match field_item_dtype:
             case np.float32:
