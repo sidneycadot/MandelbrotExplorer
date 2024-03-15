@@ -4,3 +4,4 @@ PyOpenGL
 glfw
 numpy
 Pillow
+PySide6
