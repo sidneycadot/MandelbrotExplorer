@@ -23,7 +23,7 @@ def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
 
     triangle_vertices = np.array(triangles).reshape(-1, 3)
 
-    impostor_scale_matrix = scale((1.25, 1.25, 1.05))
+    impostor_scale_matrix = scale((1.16, 1.16, 1))
 
     triangle_vertices = apply_transform_to_vertices(transformation_matrix @ impostor_scale_matrix, triangle_vertices)
 
