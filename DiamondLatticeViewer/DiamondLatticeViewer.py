@@ -194,6 +194,13 @@ class UserInteractionHandler:
                     floor_enabled = world.get_variable("floor_enabled")
                     floor_enabled = not floor_enabled
                     world.set_variable("floor_enabled", floor_enabled)
+                case glfw.KEY_M:
+                    if glIsEnabled(GL_MULTISAMPLE):
+                        print("disabling multisampling")
+                        glDisable(GL_MULTISAMPLE)
+                    else:
+                        print("enabling multisampling")
+                        glEnable(GL_MULTISAMPLE)
                 case glfw.KEY_O:
                     overlay_enabled = world.get_variable("overlay_enabled")
                     overlay_enabled = not overlay_enabled
@@ -222,14 +229,14 @@ class UserInteractionHandler:
                     render_distance = render_distance + 5.0
                     world.set_variable("render_distance", render_distance)
 
-    def process_cursor_position_event(self, window, xpos: float, ypos: float):
-        print("mouse position:", xpos, ypos)
+    def process_cursor_position_event(self, _window, xpos: float, ypos: float):
+        print("mouse position:", self, xpos, ypos)
 
-    def process_mouse_button_event(self, window, button: int, action: int, mods: int):
-        print("mouse button:", button, action, mods)
+    def process_mouse_button_event(self, _window, button: int, action: int, mods: int):
+        print("mouse button:", self, button, action, mods)
 
-    def process_scroll_event(self, window, xoffset: float, yoffset: float):
-        print("mouse scroll button:", xoffset, yoffset)
+    def process_scroll_event(self, _window, xoffset: float, yoffset: float):
+        print("mouse scroll button:", self, xoffset, yoffset)
 
 
 class Application:
@@ -237,6 +244,7 @@ class Application:
     def __init__(self):
         self._user_interaction_handler = None
         self._window_position_and_size = None
+        self._world = None
 
     @staticmethod
     def create_glfw_window(version_major: int, version_minor: int):
@@ -247,12 +255,10 @@ class Application:
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, version_major)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, version_minor)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+        glfw.window_hint(glfw.SAMPLES, 8)  # For multi-sampling
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL_TRUE)
 
         # Create the window.
-
-        monitor = glfw.get_primary_monitor()
-        current_mode = glfw.get_video_mode(monitor)
 
         width = 640
         height = 480
@@ -279,7 +285,8 @@ class Application:
             (xpos, ypos) = glfw.get_window_pos(window)
             (width, height) = glfw.get_window_size(window)
             self._window_position_and_size = (xpos, ypos, width, height)
-            glfw.set_window_monitor(window, monitor, 0, 0, current_mode.size.width, current_mode.size.height, current_mode.refresh_rate)
+            glfw.set_window_monitor(window, monitor, 0, 0, current_mode.size.width, current_mode.size.height,
+                                    current_mode.refresh_rate)
 
     def run(self):
 
@@ -323,7 +330,7 @@ class Application:
         glPointSize(1)
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
-
+        glEnable(GL_MULTISAMPLE)
         glEnable(GL_CULL_FACE)
         glCullFace(GL_BACK)
 
