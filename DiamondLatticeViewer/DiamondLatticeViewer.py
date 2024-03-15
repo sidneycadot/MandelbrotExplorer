@@ -128,10 +128,6 @@ def make_scene(world: World) -> RenderableScene:
 
 
 class UserInteractionHandler:
-    pass
-
-
-class DefaultUserInteractionHandler(UserInteractionHandler):
 
     def __init__(self, app, world):
         self._app = app
@@ -211,6 +207,15 @@ class DefaultUserInteractionHandler(UserInteractionHandler):
                     render_distance = render_distance + 5.0
                     world.set_variable("render_distance", render_distance)
 
+    def process_cursor_position_event(self, window, xpos: float, ypos: float):
+        print("mouse position:", xpos, ypos)
+
+    def process_mouse_button_event(self, window, button: int, action: int, mods: int):
+        print("mouse button:", button, action, mods)
+
+    def process_scroll_event(self, window, xoffset: float, yoffset: float):
+        print("mouse scroll button:", xoffset, yoffset)
+
 
 class Application:
 
@@ -274,8 +279,11 @@ class Application:
 
         # glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_HIDDEN)
 
-        glfw.set_framebuffer_size_callback(window, lambda *args: self._framebuffer_size_callback(*args))
-        glfw.set_key_callback(window, lambda *args: self._key_callback(*args))
+        glfw.set_framebuffer_size_callback(window, lambda *args: self.framebuffer_size_callback(*args))
+        glfw.set_key_callback(window, lambda *args: self.key_callback(*args))
+        glfw.set_cursor_pos_callback(window, lambda *args: self.cursor_position_callback(*args))
+        glfw.set_mouse_button_callback(window, lambda *args: self.mouse_button_callback(*args))
+        glfw.set_scroll_callback(window, lambda *args: self.scroll_callback(*args))
 
         glfw.make_context_current(window)
 
@@ -283,7 +291,7 @@ class Application:
 
         world.set_variable("render_distance", 60.0)
 
-        self._user_interaction_handler = DefaultUserInteractionHandler(self, world)
+        self._user_interaction_handler = UserInteractionHandler(self, world)
 
         scene = make_scene(world)
 
@@ -297,7 +305,6 @@ class Application:
         glPointSize(1)
         glClearColor(0.12, 0.12, 0.12, 1.0)
         glEnable(GL_DEPTH_TEST)
-        #glEnable(GL_MULTISAMPLE)
 
         glEnable(GL_CULL_FACE)
         glCullFace(GL_BACK)
@@ -361,13 +368,25 @@ class Application:
         glfw.terminate()
 
     @staticmethod
-    def _framebuffer_size_callback(_window, width, height):
+    def framebuffer_size_callback(_window, width, height):
         print("Resizing framebuffer:", width, height)
         glViewport(0, 0, width, height)
 
-    def _key_callback(self, window, key: int, scancode: int, action: int, mods: int):
+    def key_callback(self, window, key: int, scancode: int, action: int, mods: int):
         if self._user_interaction_handler is not None:
             self._user_interaction_handler.process_keyboard_event(window, key, scancode, action, mods)
+
+    def cursor_position_callback(self, window, xpos: float, ypos: float):
+        if self._user_interaction_handler is not None:
+            self._user_interaction_handler.process_cursor_position_event(window, xpos, ypos)
+
+    def mouse_button_callback(self, window, button: int, action: int, mods: int):
+        if self._user_interaction_handler is not None:
+            self._user_interaction_handler.process_mouse_button_event(window, button, action, mods)
+
+    def scroll_callback(self, window, xoffset: float, yoffset: float):
+        if self._user_interaction_handler is not None:
+            self._user_interaction_handler.process_scroll_event(window, xoffset, yoffset)
 
 
 def main():
