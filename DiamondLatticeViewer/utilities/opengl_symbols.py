@@ -73,7 +73,7 @@ from OpenGL.GL import (
     glBufferData,
     glEnableVertexAttribArray,
     glBindVertexArray,
-    glEnable, glDisable,
+    glEnable, glDisable, glIsEnabled,
     glUseProgram,
     glUniform1f, glUniform1ui, glUniform2ui, glUniformMatrix4fv,
     glDrawArraysInstanced,
