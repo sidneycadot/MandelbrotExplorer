@@ -1,6 +1,9 @@
 
 #version 410 core
+
+#ifdef GL_ARB_conservative_depth
 #extension GL_ARB_conservative_depth : enable
+#endif
 
 uniform mat4 transposed_inverse_view_matrix;
 uniform mat4 inverse_view_model_matrix;
@@ -14,7 +17,9 @@ in VS_OUT {
     flat int object_type; // 0 == sphere, 1 == cylinder.
 } fs_in;
 
+#ifdef GL_ARB_conservative_depth
 layout (depth_greater) out float gl_FragDepth;
+#endif
 
 layout(location = 0) out vec4 fragment_color;
 
