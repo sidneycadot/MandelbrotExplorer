@@ -58,11 +58,11 @@ class RenderableOverlay(Renderable):
 
         # Prepare texture.
 
-        font_source_path = os.path.join(os.path.dirname(__file__), "Monoid-Regular.ttf")
-        font_size = 12
+        truetype_font_source_path = os.path.join(os.path.dirname(__file__), "Monoid-Regular.ttf")
+        truetype_font_size = 12
 
         self._last_text = None
-        self._font = ImageFont.truetype(font_source_path, font_size)
+        self._font = ImageFont.truetype(truetype_font_source_path, truetype_font_size)
         self._texture_background = (40, 70, 200, 64)
         self._texture_image = Image.new("RGBA", (300, 60), self._texture_background)
         self._texture_draw = ImageDraw.Draw(self._texture_image)
@@ -130,12 +130,20 @@ class RenderableOverlay(Renderable):
 
         glUseProgram(self._shader_program)
 
-        glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, (projection_matrix @ view_matrix @ model_matrix).astype(np.float32))
+        glUniformMatrix4fv(
+            self._projection_view_model_matrix_location, 1, GL_TRUE,
+            (projection_matrix @ view_matrix @ model_matrix).astype(np.float32)
+        )
 
         (framebuffer_width, framebuffer_height) = world.get_variable("framebuffer_size")
 
+        # We need to inform the shader program about the size of the window we're rendering, so it can
+        # re-scale the overlay texture to render at one texture pixel per framebuffer pixel.
+        glUniform2ui(self._frame_buffer_size_location, framebuffer_width, framebuffer_height)
+
         glBindTexture(GL_TEXTURE_2D, self._texture)
 
+        # Update the text we want to render.
         text = "render distance: {}\nframebuffer size: {}\nrender time per frame: {:.3f} ms".format(
             world.get_variable("render_distance"),
             (framebuffer_width, framebuffer_height),
@@ -143,6 +151,7 @@ class RenderableOverlay(Renderable):
         )
 
         if text != self._last_text:
+            # If the text has render the text and upload it to texture memory.
             self._texture_image.paste(
                 self._texture_background,
                 (0, 0, self._texture_image.size[0], self._texture_image.size[1])
@@ -154,8 +163,7 @@ class RenderableOverlay(Renderable):
                 self._texture_image.size[0], self._texture_image.size[1],
                 GL_RGBA, GL_UNSIGNED_BYTE, self._texture_image.tobytes()
             )
-
-        glUniform2ui(self._frame_buffer_size_location, framebuffer_width, framebuffer_height)
+            self._last_text = text
 
         glBindVertexArray(self._vao)
 
