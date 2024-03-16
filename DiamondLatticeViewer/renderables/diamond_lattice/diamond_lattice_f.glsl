@@ -18,11 +18,9 @@ in VS_OUT {
 } fs_in;
 
 #ifdef GL_ARB_conservative_depth
-// Turns out, "depth_greater" shows visual artefacts!!
-// Strange; I don't really understand why that is.
-// We disable this for the time being.
-//
-// layout (depth_greater) out float gl_FragDepth;
+// We guarantee that gl_FragDepth will be greater than or equal to gl_FragCoord.z.
+// This allows safe depth-tests before the fragment shader is run, gaining performance.
+layout (depth_greater) out float gl_FragDepth;
 #endif
 
 layout(location = 0) out vec4 fragment_color;
@@ -132,10 +130,18 @@ void main()
 
     if (!(new_frag_depth >= gl_FragCoord.z))
     {
-        // This shouldn't happen, but it just did.
-        // We discard this fragment.
-        //fragment_color = vec4(1, 0, 0, 1);
-        //return;
+        // We have promised that gl_FragDepth we'll write will be greater than or equal to the value
+        // currently found in the depth buffer (see the gl_FragDepth declaration near the top of this shader code).
+        //
+        // Since our impostor hull triangles completely envelop the contained objects (sphere or cylinder),
+        // this shouldn't mathemematically jappen. Still, it just did!
+        //
+        // This appears to be caused by numerical imprecision (on an nVidia desktop system at least).
+        //
+        // We handle this by simply discarding the fragment, thus keeping our promise.
+        //
+        // fragment_color = vec4(1, 0, 0, 1); return;
+
         discard;
     }
 
