@@ -171,3 +171,4 @@ class RenderableOverlay(Renderable):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDrawArrays(GL_TRIANGLES, 0, self._vertex_count)
+        glDisable(GL_BLEND)
