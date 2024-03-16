@@ -130,3 +130,10 @@ def define_vertex_attributes(vbo_dtype, enable_flag: bool):
 
         if enable_flag:
             glEnableVertexAttribArray(attribute_index)
+
+
+def glGetUniformLocation_checked(shader_program: int, name: str):
+    location = glGetUniformLocation(shader_program, name)
+    if location < 0:
+        raise ValueError("Lookup of uniform variable '{}' failed.".format(name))
+    return location

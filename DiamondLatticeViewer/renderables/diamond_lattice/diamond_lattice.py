@@ -6,12 +6,13 @@ import os
 import numpy as np
 
 from utilities.matrices import translate, scale, apply_transform_to_vertices
-from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes, glGetUniformLocation_checked
 from utilities.opengl_symbols import *
 from utilities.geometry import (make_unit_sphere_triangles, make_unit_cylinder_triangles,
                                 make_cylinder_placement_transform, normalize)
 
 from renderables.renderable import Renderable
+from utilities.world import World
 
 
 def in_diamond_lattice(ix: int, iy: int, iz: int) -> bool:
@@ -131,15 +132,16 @@ class RenderableDiamondLattice(Renderable):
 
     """A Renderable that renders a diamond crystal lattice using sphere and cylinder impostors."""
 
-    def __init__(self):
+    def __init__(self, world: World):
 
         # Variables that are used to communicate with the shaders.
+
+        self._world = world
 
         self.color_mode = 0
         self.cut_mode = 0
         self.unit_cells_per_dimension = 5
         self.crystal_side_length = 16.0
-        self.impostor_mode = 0
 
         # Compile the shader program.
 
@@ -148,12 +150,11 @@ class RenderableDiamondLattice(Renderable):
 
         # Find the location of uniform shader program variables.
 
-        self._projection_matrix_location = glGetUniformLocation(self._shader_program, "projection_matrix")
-        self._transposed_inverse_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_matrix")
-        self._projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "projection_view_model_matrix")
-        self._view_model_matrix_location = glGetUniformLocation(self._shader_program, "view_model_matrix")
-        self._inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "inverse_view_model_matrix")
-        self._transposed_inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_model_matrix")
+        self._projection_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_matrix")
+        self._transposed_inverse_view_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_matrix")
+        self._projection_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_view_model_matrix")
+        self._view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "view_model_matrix")
+        self._transposed_inverse_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_model_matrix")
 
         self._unit_cells_per_dimension_location = glGetUniformLocation(self._shader_program, "unit_cells_per_dimension")
         self._crystal_side_length_location = glGetUniformLocation(self._shader_program, "crystal_side_length")
@@ -212,13 +213,14 @@ class RenderableDiamondLattice(Renderable):
 
     def render(self, projection_matrix, view_matrix, model_matrix):
 
+        world = self._world
+
         glUseProgram(self._shader_program)
 
         glUniformMatrix4fv(self._projection_matrix_location, 1, GL_TRUE, projection_matrix.astype(np.float32))
         glUniformMatrix4fv(self._transposed_inverse_view_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix).T.astype(np.float32))
         glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, (projection_matrix @ view_matrix @ model_matrix).astype(np.float32))
         glUniformMatrix4fv(self._view_model_matrix_location, 1, GL_TRUE, (view_matrix @ model_matrix).astype(np.float32))
-        glUniformMatrix4fv(self._inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).astype(np.float32))
 
         glUniformMatrix4fv(self._transposed_inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).T.astype(np.float32))
 
@@ -226,7 +228,8 @@ class RenderableDiamondLattice(Renderable):
         glUniform1ui(self._color_mode_location, self.color_mode)
         glUniform1f(self._crystal_side_length_location, self.crystal_side_length)
         glUniform1ui(self._cut_mode_location, self.cut_mode)
-        glUniform1ui(self._impostor_mode_location, self.impostor_mode)
+
+        glUniform1ui(self._impostor_mode_location, world.get_variable("impostor_mode"))
 
         glEnable(GL_CULL_FACE)
         glBindVertexArray(self._vao)

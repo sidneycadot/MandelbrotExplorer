@@ -5,17 +5,30 @@
 #extension GL_ARB_conservative_depth : enable
 #endif
 
+// Constants.
+
+const float PI = 4 * atan(1);
+
+// Uniform variables.
+
 uniform mat4 transposed_inverse_view_matrix;
 uniform mat4 inverse_view_model_matrix;
 uniform uint impostor_mode;
+uniform sampler2D my_texture;
+
+// Input variables provided by the vertex shader.
 
 in VS_OUT {
-    vec3 mv_surface;
+    vec3 mv_impostor_surface;
     vec3 color;
     flat mat4 modelview_to_object_space_matrix;
     flat mat4 object_to_projection_space_matrix;
     flat uint object_type; // 0 == sphere, 1 == cylinder.
 } fs_in;
+
+// Fragment shader output variables.
+
+layout (location = 0) out vec4 fragment_color;
 
 #ifdef GL_ARB_conservative_depth
 // We guarantee that gl_FragDepth will be greater than or equal to gl_FragCoord.z.
@@ -23,9 +36,8 @@ in VS_OUT {
 layout (depth_greater) out float gl_FragDepth;
 #endif
 
-layout(location = 0) out vec4 fragment_color;
+// Phong shading parameters.
 
-// Phong shading intensities.
 const float ia  = 0.2; // Ambient intensity.
 const float id1 = 0.6; // Diffuse intensity of the first light source.
 const float is1 = 0.5; // Specular intensity of the first light source.
@@ -34,13 +46,11 @@ const float phong_alpha = 20; // Alpha value for specular reflection.
 
 const vec3 m_lightsource1_direction = normalize(vec3(+1, 1, 1));
 
-uniform sampler2D my_texture;
+// Intersection function: ray/sphere and ray/cylinder.
 
 // Note: we don't use NaN as an invalid value because it somehow doesn't work correctly
 //   on a relatively modern nVidia card.
 const float INVALID = -1.0;
-
-const float PI = 4 * atan(1);
 
 float intersect_unit_sphere(vec3 origin, vec3 direction)
 {
@@ -83,7 +93,7 @@ float intersect_unit_cylinder(vec2 origin, vec2 direction)
 
 void main()
 {
-    vec3 object_impostor_hit = (fs_in.modelview_to_object_space_matrix * vec4(fs_in.mv_surface, 1)).xyz;
+    vec3 object_impostor_hit = (fs_in.modelview_to_object_space_matrix * vec4(fs_in.mv_impostor_surface, 1)).xyz;
     vec3 object_eye = (fs_in.modelview_to_object_space_matrix * vec4(0, 0, 0, 1)).xyz;
 
     vec3 object_eye_to_impostor_hit_vector = object_impostor_hit - object_eye; // eye-to-hitpoint vector.
@@ -130,35 +140,35 @@ void main()
 
     if (!(new_frag_depth >= gl_FragCoord.z))
     {
-        // We have promised that gl_FragDepth we'll write will be greater than or equal to the value
-        // currently found in the depth buffer (see the gl_FragDepth declaration near the top of this shader code).
+        // We have promised that gl_FragDepth we'll write will be greater than or equal to the depth value
+        // of the fragment currently being rasterized; see the gl_FragDepth declaration near the top of
+        // the file.
         //
         // Since our impostor hull triangles completely envelop the contained objects (sphere or cylinder),
-        // this shouldn't mathemematically jappen. Still, it just did!
+        // this shouldn't mathematically happen. Still, it just did!
         //
         // This appears to be caused by numerical imprecision (on an nVidia desktop system at least).
         //
-        // We handle this by simply discarding the fragment, thus keeping our promise.
-        //
-        // fragment_color = vec4(1, 0, 0, 1); return;
+        // We handle this by simply discarding the fragment, if the depth we're about to write doesn't
+        // comply with "the depth may not decrease" constraint, thus keeping our promise.
 
         discard;
     }
 
     gl_FragDepth = new_frag_depth;
 
-    vec3 object_normal = (fs_in.object_type == 0) ? object_hit : vec3(object_hit.xy, 0);
-
     // Determine fragment color using Phong shading.
+
+    vec3 object_normal = (fs_in.object_type == 0) ? object_hit : vec3(object_hit.xy, 0);
 
     vec3 k_material = fs_in.color;
 
     // NOTE: We do our geometric calculations in the "MV" coordinate system.
 
     vec3 mv_eye = vec3(0, 0, 0);
-    vec3 mv_surface = fs_in.mv_surface;
+    vec3 mv_impostor_surface = fs_in.mv_impostor_surface;
     vec3 mv_surface_normal = normalize((transpose(fs_in.modelview_to_object_space_matrix) * vec4(object_normal, 0)).xyz);
-    vec3 mv_viewer_direction = normalize(mv_eye - mv_surface);
+    vec3 mv_viewer_direction = normalize(mv_eye - mv_impostor_surface);
 
     vec3 mv_lightsource1_direction = normalize((transposed_inverse_view_matrix * vec4(m_lightsource1_direction, 0)).xyz);
     vec3 mv_lightsource1_reflection_direction = 2 * dot(mv_lightsource1_direction, mv_surface_normal) * mv_surface_normal - mv_lightsource1_direction;

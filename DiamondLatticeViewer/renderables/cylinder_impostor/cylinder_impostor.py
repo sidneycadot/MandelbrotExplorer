@@ -8,10 +8,11 @@ import numpy as np
 
 from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices, scale
-from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes, glGetUniformLocation_checked
 from utilities.geometry import make_unit_cylinder_triangles
 
 from renderables.renderable import Renderable
+from utilities.world import World
 
 
 def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
@@ -23,11 +24,9 @@ def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
 
     triangle_vertices = np.array(triangles).reshape(-1, 3)
 
-    impostor_scale_matrix = scale((1.16, 1.16, 1))
+    impostor_scale_matrix = scale((1.2, 1.2, 1.01))
 
     triangle_vertices = apply_transform_to_vertices(transformation_matrix @ impostor_scale_matrix, triangle_vertices)
-
-    print("triangle_vertices shape:", triangle_vertices.shape)
 
     vbo_dtype = np.dtype([
         ("a_vertex", np.float32, 3)
@@ -42,7 +41,9 @@ def make_cylinder_impostor_triangle_vertex_data(transformation_matrix):
 
 class RenderableCylinderImpostor(Renderable):
 
-    def __init__(self, m_xform=None):
+    def __init__(self, world: World, m_xform=None):
+
+        self._world = world
 
         # Compile the shader program.
 
@@ -51,16 +52,14 @@ class RenderableCylinderImpostor(Renderable):
 
         # Find the location of uniform shader program variables.
 
-        self._model_matrix_location = glGetUniformLocation(self._shader_program, "model_matrix")
-        self._view_matrix_location = glGetUniformLocation(self._shader_program, "view_matrix")
-        self._projection_matrix_location = glGetUniformLocation(self._shader_program, "projection_matrix")
+        self._projection_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_matrix")
 
-        self._view_model_matrix_location = glGetUniformLocation(self._shader_program, "view_model_matrix")
-        self._projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "projection_view_model_matrix")
-        self._inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "inverse_view_model_matrix")
-        self._transposed_inverse_view_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_matrix")
-        self._transposed_inverse_view_model_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_view_model_matrix")
-        self._transposed_inverse_projection_view_model_matrix_location = glGetUniformLocation(self._shader_program, "transposed_inverse_projection_view_model_matrix")
+        self._view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "view_model_matrix")
+        self._projection_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_view_model_matrix")
+        self._transposed_inverse_view_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_matrix")
+        self._transposed_inverse_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_model_matrix")
+
+        self._impostor_mode_location = glGetUniformLocation_checked(self._shader_program, "impostor_mode")
 
         self._texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self._texture)
@@ -130,18 +129,17 @@ class RenderableCylinderImpostor(Renderable):
 
     def render(self, projection_matrix, view_matrix, model_matrix):
 
+        world = self._world
+
         glUseProgram(self._shader_program)
 
-        glUniformMatrix4fv(self._model_matrix_location, 1, GL_TRUE, model_matrix.astype(np.float32))
-        glUniformMatrix4fv(self._view_matrix_location, 1, GL_TRUE, view_matrix.astype(np.float32))
         glUniformMatrix4fv(self._projection_matrix_location, 1, GL_TRUE, projection_matrix.astype(np.float32))
-
         glUniformMatrix4fv(self._view_model_matrix_location, 1, GL_TRUE, (view_matrix @ model_matrix).astype(np.float32))
         glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, (projection_matrix @ view_matrix @ model_matrix).astype(np.float32))
-        glUniformMatrix4fv(self._inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).astype(np.float32))
         glUniformMatrix4fv(self._transposed_inverse_view_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix).T.astype(np.float32))
         glUniformMatrix4fv(self._transposed_inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).T.astype(np.float32))
-        glUniformMatrix4fv(self._transposed_inverse_projection_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(projection_matrix @ view_matrix @ model_matrix).T.astype(np.float32))
+
+        glUniform1ui(self._impostor_mode_location, world.get_variable("impostor_mode"))
 
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glBindVertexArray(self._vao)

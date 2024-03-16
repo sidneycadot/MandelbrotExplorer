@@ -99,5 +99,6 @@ from OpenGL.GL import (
     glCullFace,
     glClear,
     glViewport,
-    glBlendFunc
+    glBlendFunc,
+    glGetError
 )

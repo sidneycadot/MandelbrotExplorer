@@ -19,7 +19,7 @@ uniform float crystal_side_length;
 uniform uint color_mode;
 
 out VS_OUT {
-    vec3 mv_surface;
+    vec3 mv_impostor_surface;
     vec3 color;
     flat mat4 modelview_to_object_space_matrix;
     flat mat4 object_to_projection_space_matrix;
@@ -97,7 +97,7 @@ void main()
         vec3 vertex_position = unit_cell_displacement_vector + a_vertex;
 
         gl_Position = projection_view_model_matrix * vec4(vertex_position, 1.0);
-        vs_out.mv_surface = (view_model_matrix * vec4(vertex_position, 1.0)).xyz;
+        vs_out.mv_impostor_surface = (view_model_matrix * vec4(vertex_position, 1.0)).xyz;
 
         vs_out.object_type = (a_lattice_delta.x == 0) ? 0 : 1;
 

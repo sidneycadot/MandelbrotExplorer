@@ -17,11 +17,13 @@ from utilities.world import World
 def make_scene(world: World) -> RenderableScene:
     """Create a scene in the given world."""
 
+    world.set_variable("impostor_mode", 0)
+
     scene = RenderableScene()
 
     # The floor model.
 
-    world.set_variable("floor_enabled", True)
+    world.set_variable("floor_enabled", False)
     scene.add_model(
         RenderableOptionalModel(
             RenderableModelTransformer(
@@ -34,79 +36,96 @@ def make_scene(world: World) -> RenderableScene:
 
     # The sphere impostor constellation.
 
-    draw_sphere_impostor = False
-    if draw_sphere_impostor:
-        sphere_imposter_constellation = RenderableScene()
+    world.set_variable("sphere_constellation_enabled", False)
 
-        earth = RenderableSphereImpostor("earth.png")
+    sphere_imposter_constellation = RenderableScene()
 
-        sphere_imposter_constellation.add_model(
-            RenderableModelTransformer(
-                earth,
-                lambda: multiply_matrices(
-                    translate((+0.8, 0.0, 0)),
-                    scale((1.0, 1.0, 1.0)),
-                    rotate((0, 1, 0), 0 * world.time())
-                )
+    earth = RenderableSphereImpostor(world, "earth.png")
+
+    sphere_imposter_constellation.add_model(
+        RenderableModelTransformer(
+            earth,
+            lambda: multiply_matrices(
+                translate((+0.8, 0.0, 0)),
+                scale((1.0, 1.0, 1.0)),
+                rotate((0, 1, 0), 0 * world.time())
             )
         )
+    )
 
-        moon = RenderableSphereImpostor("moon.png")
+    moon = RenderableSphereImpostor(world, "moon.png")
 
-        sphere_imposter_constellation.add_model(
-            RenderableModelTransformer(
-                moon,
-                lambda: multiply_matrices(
-                    translate((-0.8, 0.0, 0.3)),
-                    scale((1.0, 1.0, 1.0)),
-                    rotate((0, 1, 0), 0.0 * world.time())
-                )
+    sphere_imposter_constellation.add_model(
+        RenderableModelTransformer(
+            moon,
+            lambda: multiply_matrices(
+                translate((-0.8, 0.0, 0.3)),
+                scale((1.0, 1.0, 1.0)),
+                rotate((0, 1, 0), 0.0 * world.time())
             )
         )
+    )
 
-        scene.add_model(
+    scene.add_model(
+        RenderableOptionalModel(
             RenderableModelTransformer(
                 sphere_imposter_constellation,
                 lambda: multiply_matrices(
                     rotate((0, 1, 0), 1.0 * world.time())
                 )
-            )
+            ),
+            lambda: world.get_variable("sphere_constellation_enabled")
         )
+    )
 
     # The cylinder impostor constellation.
 
-    draw_cylinder_impostor = False
-    if draw_cylinder_impostor:
-        cylinder_impostor = RenderableCylinderImpostor()
+    world.set_variable("cylinder_constellation_enabled", False)
 
-        scene.add_model(
-            RenderableModelTransformer(
-                cylinder_impostor,
-                lambda: multiply_matrices(
-                    translate((+0.25, 0.0, 0)),
-                    rotate((0, 1, 0), 0.0 * world.time()),
-                    rotate((1, 0, 0), 0.5 * world.time()),
-                    scale((0.2, 0.2, 4.0))
-                )
+    cylinder_imposter_constellation = RenderableScene()
+
+    cylinder_impostor = RenderableCylinderImpostor(world)
+
+    cylinder_imposter_constellation.add_model(
+        RenderableModelTransformer(
+            cylinder_impostor,
+            lambda: multiply_matrices(
+                translate((+0.25, 0.0, 0)),
+                rotate((0, 1, 0), 0.0 * world.time()),
+                rotate((1, 0, 0), 0.5 * world.time()),
+                scale((0.2, 0.2, 4.0))
             )
         )
+    )
 
-        sphere_impostor = RenderableSphereImpostor("earth.png")
+    sphere_impostor = RenderableSphereImpostor(world, "earth.png")
 
-        scene.add_model(
-            RenderableModelTransformer(
-                sphere_impostor,
-                lambda: multiply_matrices(
-                    translate((+0.0, 0.0, 0)),
-                    scale((1.0, 1.0, 1.0)),
-                    rotate((0, 1, 0), 1 * world.time())
-                )
+    cylinder_imposter_constellation.add_model(
+        RenderableModelTransformer(
+            sphere_impostor,
+            lambda: multiply_matrices(
+                translate((+0.0, 0.0, 0)),
+                scale((1.0, 1.0, 1.0)),
+                rotate((0, 1, 0), 1 * world.time())
             )
         )
+    )
+
+    scene.add_model(
+        RenderableOptionalModel(
+            RenderableModelTransformer(
+                cylinder_imposter_constellation,
+                lambda: multiply_matrices(
+                    rotate((0, 1, 0), 1.0 * world.time())
+                )
+            ),
+            lambda: world.get_variable("cylinder_constellation_enabled")
+        )
+    )
 
     # The diamond lattice.
 
-    diamond_lattice = RenderableDiamondLattice()
+    diamond_lattice = RenderableDiamondLattice(world)
     world.set_variable("diamond_lattice", diamond_lattice)
 
     world.set_variable("diamond_lattice_enabled", True)
@@ -188,12 +207,20 @@ class UserInteractionHandler:
                     diamond_lattice_enabled = world.get_variable("diamond_lattice_enabled")
                     diamond_lattice_enabled = not diamond_lattice_enabled
                     world.set_variable("diamond_lattice_enabled", diamond_lattice_enabled)
-                case glfw.KEY_F:
-                    app.toggle_fullscreen(window)
+                case glfw.KEY_S:
+                    sphere_constellation_enabled = world.get_variable("sphere_constellation_enabled")
+                    sphere_constellation_enabled = not sphere_constellation_enabled
+                    world.set_variable("sphere_constellation_enabled", sphere_constellation_enabled)
+                case glfw.KEY_Y:
+                    cylinder_constellation_enabled = world.get_variable("cylinder_constellation_enabled")
+                    cylinder_constellation_enabled = not cylinder_constellation_enabled
+                    world.set_variable("cylinder_constellation_enabled", cylinder_constellation_enabled)
                 case glfw.KEY_L:
                     floor_enabled = world.get_variable("floor_enabled")
                     floor_enabled = not floor_enabled
                     world.set_variable("floor_enabled", floor_enabled)
+                case glfw.KEY_F:
+                    app.toggle_fullscreen(window)
                 case glfw.KEY_M:
                     if glIsEnabled(GL_MULTISAMPLE):
                         print("disabling multisampling")
@@ -206,8 +233,9 @@ class UserInteractionHandler:
                     overlay_enabled = not overlay_enabled
                     world.set_variable("overlay_enabled", overlay_enabled)
                 case glfw.KEY_I:
-                    diamond_lattice = world.get_variable("diamond_lattice")
-                    diamond_lattice.impostor_mode = (diamond_lattice.impostor_mode + 1) % 2
+                    impostor_mode = world.get_variable("impostor_mode")
+                    impostor_mode = (impostor_mode + 1) % 2
+                    world.set_variable("impostor_mode", impostor_mode)
                 case glfw.KEY_RIGHT_BRACKET:
                     diamond_lattice = world.get_variable("diamond_lattice")
                     if (mods & glfw.MOD_SHIFT) != 0:
