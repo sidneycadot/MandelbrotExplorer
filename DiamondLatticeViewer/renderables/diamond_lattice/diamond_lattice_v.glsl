@@ -23,14 +23,14 @@ out VS_OUT {
     vec3 color;
     flat mat4 modelview_to_object_space_matrix;
     flat mat4 object_to_projection_space_matrix;
-    flat int object_type; // 0 == sphere, 1 == cylinder.
+    flat uint object_type; // 0 == sphere, 1 == cylinder.
 } vs_out;
 
 const float UNIT_CELL_SIZE = 4.0;
 
-const vec3 cut100_normal = normalize(vec3(1.0, 0.0, 0.0));
-const vec3 cut110_normal = normalize(vec3(1.0, 1.0, 0.0));
-const vec3 cut111_normal = normalize(vec3(1.0, 1.0, 1.0));
+const vec3 cut100_normal = normalize(vec3(1, 0, 0));
+const vec3 cut110_normal = normalize(vec3(1, 1, 0));
+const vec3 cut111_normal = normalize(vec3(1, 1, 1));
 
 const float positive_infinity = +1e30; // Certainly outside of crystal.
 const float negative_infinity = -1e30; // Certainly inside of crystal.

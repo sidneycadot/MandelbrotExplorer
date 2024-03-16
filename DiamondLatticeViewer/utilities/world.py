@@ -50,7 +50,7 @@ class World:
         return self._freeze_time is not None
 
     def set_variable(self, name: str, value: Any):
-        print("@@ setting variable {!r} to value {}.".format(name, value))
+        print("Setting variable {!r} to value {}.".format(name, value))
         self._variables[name] = value
 
     def get_variable(self, name):

@@ -21,14 +21,12 @@ def make_overlay_vertex_data():
     triangle_vertices = np.array(triangles).reshape(-1, 2)
 
     vbo_dtype = np.dtype([
-        ("a_vertex", np.float32, 2),
-        ("a_brightness", np.float32)
+        ("a_vertex", np.float32, 2)
     ])
 
     vbo_data = np.empty(dtype=vbo_dtype, shape=len(triangle_vertices))
 
     vbo_data["a_vertex"] = triangle_vertices
-    vbo_data["a_brightness"] = 0.4
 
     return vbo_data
 
@@ -38,15 +36,6 @@ class RenderableOverlay(Renderable):
     def __init__(self, world):
 
         self._world = world
-        self._last_text = None
-
-        font_source_path = os.path.join(os.path.dirname(__file__), "Monoid-Regular.ttf")
-        font_size = 12
-
-        self._font = ImageFont.truetype(font_source_path, font_size)
-        self._texture_background = (40, 70, 200, 64)
-        self._texture_image = Image.new("RGBA", (300, 60), self._texture_background)
-        self._texture_draw = ImageDraw.Draw(self._texture_image)
 
         # Compile the shader program.
 
@@ -67,7 +56,16 @@ class RenderableOverlay(Renderable):
 
         self._vertex_count = vbo_data.size
 
-        # Make texture.
+        # Prepare texture.
+
+        font_source_path = os.path.join(os.path.dirname(__file__), "Monoid-Regular.ttf")
+        font_size = 12
+
+        self._last_text = None
+        self._font = ImageFont.truetype(font_source_path, font_size)
+        self._texture_background = (40, 70, 200, 64)
+        self._texture_image = Image.new("RGBA", (300, 60), self._texture_background)
+        self._texture_draw = ImageDraw.Draw(self._texture_image)
 
         self._texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self._texture)
@@ -81,9 +79,6 @@ class RenderableOverlay(Renderable):
             self._texture_image.size[0], self._texture_image.size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE,
             self._texture_image.tobytes()
         )
-
-        #glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.shape[1], image.shape[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
-        #glGenerateMipmap(GL_TEXTURE_2D)
 
         # Make Vertex Buffer Object (VBO)
 
@@ -109,6 +104,9 @@ class RenderableOverlay(Renderable):
 
     def close(self):
 
+        if self._texture is not None:
+            glDeleteTextures(1, (self._texture, ))
+
         if self._vao is not None:
             glDeleteVertexArrays(1, (self._vao, ))
             self._vao = None
@@ -132,16 +130,7 @@ class RenderableOverlay(Renderable):
 
         glUseProgram(self._shader_program)
 
-        #glUniformMatrix4fv(self._model_matrix_location, 1, GL_TRUE, model_matrix.astype(np.float32))
-        #glUniformMatrix4fv(self._view_matrix_location, 1, GL_TRUE, view_matrix.astype(np.float32))
-        #glUniformMatrix4fv(self._projection_matrix_location, 1, GL_TRUE, projection_matrix.astype(np.float32))
-
-        #glUniformMatrix4fv(self._view_model_matrix_location, 1, GL_TRUE, (view_matrix @ model_matrix).astype(np.float32))
         glUniformMatrix4fv(self._projection_view_model_matrix_location, 1, GL_TRUE, (projection_matrix @ view_matrix @ model_matrix).astype(np.float32))
-        #glUniformMatrix4fv(self._inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).astype(np.float32))
-        #glUniformMatrix4fv(self._transposed_inverse_view_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix).T.astype(np.float32))
-        #glUniformMatrix4fv(self._transposed_inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).T.astype(np.float32))
-        #glUniformMatrix4fv(self._transposed_inverse_projection_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(projection_matrix @ view_matrix @ model_matrix).T.astype(np.float32))
 
         (framebuffer_width, framebuffer_height) = world.get_variable("framebuffer_size")
 

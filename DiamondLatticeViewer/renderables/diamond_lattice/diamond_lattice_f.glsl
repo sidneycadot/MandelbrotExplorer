@@ -14,7 +14,7 @@ in VS_OUT {
     vec3 color;
     flat mat4 modelview_to_object_space_matrix;
     flat mat4 object_to_projection_space_matrix;
-    flat int object_type; // 0 == sphere, 1 == cylinder.
+    flat uint object_type; // 0 == sphere, 1 == cylinder.
 } fs_in;
 
 #ifdef GL_ARB_conservative_depth
@@ -129,11 +129,11 @@ void main()
     vec4 projection = fs_in.object_to_projection_space_matrix * vec4(object_hit, 1);
 
     float new_frag_depth =  0.5 + 0.5 *  (projection.z / projection.w);
-    //float new_frag_depth = (projection.z / projection.w);
 
     if (!(new_frag_depth >= gl_FragCoord.z))
     {
-        // This shouldn't happen, but it just did. We discard this fragment.
+        // This shouldn't happen, but it just did.
+        // We discard this fragment.
         //fragment_color = vec4(1, 0, 0, 1);
         //return;
         discard;
