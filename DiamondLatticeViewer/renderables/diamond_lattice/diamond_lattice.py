@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 from utilities.matrices import translate, scale, apply_transform_to_vertices
-from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes, glGetUniformLocation_checked
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes, gl_get_uniform_location_checked
 from utilities.opengl_symbols import *
 from utilities.geometry import (make_unit_sphere_triangles, make_unit_cylinder_triangles,
                                 make_cylinder_placement_transform, normalize)
@@ -26,8 +26,8 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
     if transformation_matrix is None:
         transformation_matrix = np.identity(4)
 
-    carbon_sphere_scale = 0.3
-    carbon_carbon_bond_scale = 0.1
+    carbon_sphere_scale = 0.30
+    carbon_carbon_bond_scale = 0.10
 
     # Make coarse unit sphere and unit cylinder triangle vertices.
     # These are used for the impostor hulls.
@@ -39,6 +39,8 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
     unit_cylinder_triangle_vertices = np.array(unit_cylinder_triangles).reshape(-1, 3)
 
     # Prepare VBO data.
+    # For each of the triangles that make up the sphere/cylinder impostor,
+    # we also calculate and the inverse placement matrix so the shader has access to it.
 
     vbo_dtype = np.dtype([
         ("a_vertex", np.float32, 3),  # Triangle vertex
@@ -82,7 +84,10 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
                 jy = iy + dy
                 jz = iz + dz
 
-                if max(jx, jy, jz) > 3:
+                #if max(jx, jy, jz) > 3:
+                #    continue
+
+                if (ix, iy, iz) < (jx, jy, jz):
                     continue
 
                 if in_diamond_lattice(jx, jy, jz):
@@ -150,11 +155,11 @@ class RenderableDiamondLattice(Renderable):
 
         # Find the location of uniform shader program variables.
 
-        self._projection_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_matrix")
-        self._transposed_inverse_view_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_matrix")
-        self._projection_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_view_model_matrix")
-        self._view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "view_model_matrix")
-        self._transposed_inverse_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_model_matrix")
+        self._projection_matrix_location = gl_get_uniform_location_checked(self._shader_program, "projection_matrix")
+        self._transposed_inverse_view_matrix_location = gl_get_uniform_location_checked(self._shader_program, "transposed_inverse_view_matrix")
+        self._projection_view_model_matrix_location = gl_get_uniform_location_checked(self._shader_program, "projection_view_model_matrix")
+        self._view_model_matrix_location = gl_get_uniform_location_checked(self._shader_program, "view_model_matrix")
+        self._transposed_inverse_view_model_matrix_location = gl_get_uniform_location_checked(self._shader_program, "transposed_inverse_view_model_matrix")
 
         self._unit_cells_per_dimension_location = glGetUniformLocation(self._shader_program, "unit_cells_per_dimension")
         self._crystal_side_length_location = glGetUniformLocation(self._shader_program, "crystal_side_length")

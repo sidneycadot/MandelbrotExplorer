@@ -153,7 +153,7 @@ void main()
                 else
                 {
                     // Carbon-carbon bond (cylinder).
-                    vs_out.color = vec3(1.0, 1.0, 1.0);
+                    vs_out.color =  vec3(1.0, 1.0, 1.0);
                 }
                 break;
             }

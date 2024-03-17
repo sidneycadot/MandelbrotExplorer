@@ -9,7 +9,7 @@ import numpy as np
 from utilities.opengl_symbols import *
 from utilities.matrices import apply_transform_to_vertices, scale
 from renderables.renderable import Renderable
-from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes, glGetUniformLocation_checked
+from utilities.opengl_utilities import create_opengl_program, define_vertex_attributes, gl_get_uniform_location_checked
 from utilities.geometry import make_unit_sphere_triangles
 
 
@@ -50,11 +50,11 @@ class RenderableSphereImpostor(Renderable):
 
         # Find the location of uniform shader program variables.
 
-        self._projection_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_matrix")
-        self._view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "view_model_matrix")
-        self._projection_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "projection_view_model_matrix")
-        self._transposed_inverse_view_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_matrix")
-        self._transposed_inverse_view_model_matrix_location = glGetUniformLocation_checked(self._shader_program, "transposed_inverse_view_model_matrix")
+        self._projection_matrix_location = gl_get_uniform_location_checked(self._shader_program, "projection_matrix")
+        self._view_model_matrix_location = gl_get_uniform_location_checked(self._shader_program, "view_model_matrix")
+        self._projection_view_model_matrix_location = gl_get_uniform_location_checked(self._shader_program, "projection_view_model_matrix")
+        self._transposed_inverse_view_matrix_location = gl_get_uniform_location_checked(self._shader_program, "transposed_inverse_view_matrix")
+        self._transposed_inverse_view_model_matrix_location = gl_get_uniform_location_checked(self._shader_program, "transposed_inverse_view_model_matrix")
 
         self._impostor_mode_location = glGetUniformLocation(self._shader_program, "impostor_mode")
 
