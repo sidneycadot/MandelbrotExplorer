@@ -255,7 +255,8 @@ class UserInteractionHandler:
                     world.set_variable("render_distance", render_distance)
 
     def process_cursor_position_event(self, _window, xpos: float, ypos: float):
-        print("mouse position:", self, xpos, ypos)
+        pass
+        # print("mouse position:", self, xpos, ypos)
 
     def process_mouse_button_event(self, _window, button: int, action: int, mods: int):
         print("mouse button:", self, button, action, mods)
