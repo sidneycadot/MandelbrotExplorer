@@ -43,6 +43,7 @@ float crystal_lattice_surface_cut_distance(vec3 pos)
     // Negative : inside crystal.
 
     bool candidate = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 0.5 * diamond_lattice_side_length;
+    //bool candidate = length(pos) <= 0.5 * diamond_lattice_side_length + 0.1;
     if (!candidate)
     {
         return positive_infinity; // Outside of crystal.
