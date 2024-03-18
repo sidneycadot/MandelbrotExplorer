@@ -143,10 +143,13 @@ class RenderableOverlay(Renderable):
 
         glBindTexture(GL_TEXTURE_2D, self._texture)
 
+        unit_cell_size = 0.3567  # [nm] Carbon (diamond)
+        # unit_cell_size = 0.543   # [nm] Silicon
+
         # Update the text we want to render.
         text = "diamond lattice side length: {} ({:.3f} nm)\nrender distance: {}\nframebuffer size: {}\nrender time per frame: {:.3f} ms".format(
             world.get_variable("diamond_lattice_side_length"),
-            world.get_variable("diamond_lattice_side_length") / 4 * 0.3567,
+            world.get_variable("diamond_lattice_side_length") / 4 * unit_cell_size,
             world.get_variable("render_distance"),
             (framebuffer_width, framebuffer_height),
             world.get_variable("ms_per_frame")
