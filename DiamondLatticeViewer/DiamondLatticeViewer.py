@@ -128,7 +128,7 @@ def make_scene(world: World) -> RenderableScene:
     diamond_lattice = RenderableDiamondLattice(world)
     world.set_variable("diamond_lattice", diamond_lattice)
 
-    world.set_variable("diamond_lattice_side_length", 20)
+    world.set_variable("diamond_lattice_side_length", 19)
     world.set_variable("diamond_lattice_enabled", True)
     scene.add_model(
         RenderableOptionalModel(
@@ -239,11 +239,11 @@ class UserInteractionHandler:
                     world.set_variable("impostor_mode", impostor_mode)
                 case glfw.KEY_LEFT_BRACKET:
                     diamond_lattice_side_length = world.get_variable("diamond_lattice_side_length")
-                    diamond_lattice_side_length = max(4, diamond_lattice_side_length - 8)
+                    diamond_lattice_side_length = max(1, diamond_lattice_side_length - 2)
                     world.set_variable("diamond_lattice_side_length", diamond_lattice_side_length)
                 case glfw.KEY_RIGHT_BRACKET:
                     diamond_lattice_side_length = world.get_variable("diamond_lattice_side_length")
-                    diamond_lattice_side_length = diamond_lattice_side_length + 8
+                    diamond_lattice_side_length = diamond_lattice_side_length + 2
                     world.set_variable("diamond_lattice_side_length", diamond_lattice_side_length)
                 case glfw.KEY_UP:
                     render_distance = world.get_variable("render_distance")

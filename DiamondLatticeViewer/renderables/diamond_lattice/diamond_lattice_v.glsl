@@ -134,9 +134,9 @@ void main()
                     // Carbon atom (sphere).
                     switch (cut_mode)
                     {
-                        case 1: vs_out.color = (carbon_cut_distance > -1.5) ? vec3(1.0, 0.6, 0.6) : vec3(1.0, 1.0, 1.0); break;
-                        case 2: vs_out.color = (carbon_cut_distance > -1.0) ? vec3(0.6, 1.0, 0.6) : vec3(1.0, 1.0, 1.0); break;
-                        case 3: vs_out.color = (carbon_cut_distance > -1.9) ? vec3(0.6, 0.6, 1.0) : vec3(1.0, 1.0, 1.0); break;
+                        case 1: vs_out.color = (carbon_cut_distance > -2.3) ? vec3(1.0, 0.0, 0.0) : vec3(1.0, 1.0, 1.0); break;
+                        case 2: vs_out.color = (carbon_cut_distance > -2.3) ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 1.0, 1.0); break;
+                        case 3: vs_out.color = (carbon_cut_distance > -2.3) ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 1.0, 1.0); break;
                         default : vs_out.color = vec3(1.0, 1.0, 1.0); break;
                     }
                 }
