@@ -166,7 +166,7 @@ void main()
                 if (a_lattice_delta.x == 0)
                 {
                     // Carbon atom (sphere).
-                    if (mod(a_lattice_position.x + a_lattice_position.y + a_lattice_position.z, 4) == 0)
+                    if (mod(a_lattice_position.x + a_lattice_position.y + a_lattice_position.z +1.5, 4) == 0)
                     {
                         vs_out.color = vec3(1.0, 0.0, 0.0);
                     }
