@@ -128,6 +128,7 @@ def make_scene(world: World) -> RenderableScene:
     diamond_lattice = RenderableDiamondLattice(world)
     world.set_variable("diamond_lattice", diamond_lattice)
 
+    world.set_variable("diamond_lattice_side_length", 20)
     world.set_variable("diamond_lattice_enabled", True)
     scene.add_model(
         RenderableOptionalModel(
@@ -236,18 +237,14 @@ class UserInteractionHandler:
                     impostor_mode = world.get_variable("impostor_mode")
                     impostor_mode = (impostor_mode + 1) % 2
                     world.set_variable("impostor_mode", impostor_mode)
-                case glfw.KEY_RIGHT_BRACKET:
-                    diamond_lattice = world.get_variable("diamond_lattice")
-                    if (mods & glfw.MOD_SHIFT) != 0:
-                        diamond_lattice.unit_cells_per_dimension = diamond_lattice.unit_cells_per_dimension + 2
-                    else:
-                        diamond_lattice.crystal_side_length = diamond_lattice.crystal_side_length + 2.0
                 case glfw.KEY_LEFT_BRACKET:
-                    diamond_lattice = world.get_variable("diamond_lattice")
-                    if (mods & glfw.MOD_SHIFT) != 0:
-                        diamond_lattice.unit_cells_per_dimension = max(1, diamond_lattice.unit_cells_per_dimension - 2)
-                    else:
-                        diamond_lattice.crystal_side_length = max(0, diamond_lattice.crystal_side_length - 2.0)
+                    diamond_lattice_side_length = world.get_variable("diamond_lattice_side_length")
+                    diamond_lattice_side_length = max(4, diamond_lattice_side_length - 8)
+                    world.set_variable("diamond_lattice_side_length", diamond_lattice_side_length)
+                case glfw.KEY_RIGHT_BRACKET:
+                    diamond_lattice_side_length = world.get_variable("diamond_lattice_side_length")
+                    diamond_lattice_side_length = diamond_lattice_side_length + 8
+                    world.set_variable("diamond_lattice_side_length", diamond_lattice_side_length)
                 case glfw.KEY_UP:
                     render_distance = world.get_variable("render_distance")
                     render_distance = max(0.0, render_distance - 5.0)

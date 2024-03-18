@@ -2,8 +2,8 @@
 #version 410 core
 
 layout (location = 0) in vec3 a_vertex;
-layout (location = 1) in ivec3 a_lattice_position;
-layout (location = 2) in ivec3 a_lattice_delta;
+layout (location = 1) in vec3 a_lattice_position;
+layout (location = 2) in vec3 a_lattice_delta;
 layout (location = 3) in vec4 a_inverse_placement_matrix_row1;
 layout (location = 4) in vec4 a_inverse_placement_matrix_row2;
 layout (location = 5) in vec4 a_inverse_placement_matrix_row3;
@@ -15,7 +15,7 @@ uniform mat4 projection_matrix;
 
 uniform uint cut_mode;
 uniform uint unit_cells_per_dimension;
-uniform float crystal_side_length;
+uniform float diamond_lattice_side_length;
 uniform uint color_mode;
 
 out VS_OUT {
@@ -42,7 +42,7 @@ float crystal_lattice_surface_cut_distance(vec3 pos)
     // Positive : outside crystal.
     // Negative : inside crystal.
 
-    bool candidate = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 0.5 * crystal_side_length;
+    bool candidate = max(abs(pos.x), max(abs(pos.y), abs(pos.z))) <= 0.5 * diamond_lattice_side_length;
     if (!candidate)
     {
         return positive_infinity; // Outside of crystal.
@@ -66,7 +66,10 @@ void main()
 
     uvec3 unit_cell_index_vector = uvec3(ix, iy, iz);
 
-    vec3 unit_cell_displacement_vector = UNIT_CELL_SIZE * (unit_cell_index_vector - 0.5 * unit_cells_per_dimension);
+    // 1 --> 0
+    // 3 --> -1
+    // 5 --> -2
+    vec3 unit_cell_displacement_vector = UNIT_CELL_SIZE * (unit_cell_index_vector - 0.5 * (unit_cells_per_dimension - 1));
 
     // Do we want to render this triangle?
 
@@ -148,7 +151,7 @@ void main()
                 if (a_lattice_delta.x == 0)
                 {
                     // Carbon atom (sphere).
-                    vs_out.color = 0.2 + 0.9 * a_lattice_position / 3;
+                    vs_out.color = 0.55 + 0.45 * a_lattice_position / 1.5;
                 }
                 else
                 {
@@ -162,7 +165,7 @@ void main()
                 if (a_lattice_delta.x == 0)
                 {
                     // Carbon atom (sphere).
-                    if ((a_lattice_position.x + a_lattice_position.y + a_lattice_position.z) % 4 == 0)
+                    if (mod(a_lattice_position.x + a_lattice_position.y + a_lattice_position.z, 4) == 0)
                     {
                         vs_out.color = vec3(1.0, 0.0, 0.0);
                     }

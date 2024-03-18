@@ -44,8 +44,8 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
 
     vbo_dtype = np.dtype([
         ("a_vertex", np.float32, 3),  # Triangle vertex
-        ("a_lattice_position", np.int32, 3),  # Lattice position
-        ("a_lattice_delta", np.int32, 3),  # Lattice delta (zero vector for sphere, nonzero vector for cylinder)
+        ("a_lattice_position", np.float32, 3),  # Lattice position
+        ("a_lattice_delta", np.float32, 3),  # Lattice delta (zero vector for sphere, nonzero vector for cylinder)
         ("inverse_placement_matrix_row1", np.float32, 4),  # Row 1 of inverse placement matrix.
         ("inverse_placement_matrix_row2", np.float32, 4),  # Row 2 of inverse placement matrix.
         ("inverse_placement_matrix_row3", np.float32, 4)  # Row 3 of inverse placement matrix.
@@ -56,12 +56,39 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
     sphere_impostor_scale_matrix = scale(1.26)
     cylinder_impostor_scale_matrix = scale((1.2, 1.2, 1.01))
 
-    for (ix, iy, iz) in itertools.product(range(4), repeat=3):
+    count_carbons = 0
+    count_carbon_carbon_bonds = 0
+
+    # We use a unit cell comprised of the following eight carbons.
+    #   The unit cell spatial coordinates are translated so their
+    # mean is at the origin.
+    #   This is accomplished by a translation by (-3.5, -3.5, -3.5).
+    #
+    # integer lattice coordinates    re-centered coordinates
+    # ===========================    =======================
+    #          (2, 2, 4)                (-1.5, -1.5, +0.5)
+    #          (2, 4, 2)                (-1.5, +0.5, -1.5)
+    #          (3, 3, 3)                (-0.5, -0.5, -0.5)
+    #          (3, 5, 5)                (-0.5, +1.5, +1.5)
+    #          (4, 2, 2)                (+0.5, -1.5, -1.5)
+    #          (4, 4, 4)                (+0.5, +0.5, +0.5)
+    #          (5, 3, 5)                (+1.5, -0.5, +1.5)
+    #          (5, 5, 3)                (+1.5, +1.5, -0.5)
+
+    for (ix, iy, iz) in itertools.product(range(2, 6), repeat=3):
         if in_diamond_lattice(ix, iy, iz):
+
+            # Spatial location of this carbon.
+
+            c1 = np.array((ix - 3.5, iy - 3.5, iz - 3.5))
 
             # Add triangles for a single Carbon sphere.
 
-            sphere_placement_matrix = translate((ix, iy, iz)) @ scale(carbon_sphere_scale)
+            count_carbons += 1
+
+            # Place the sphere triangles.
+
+            sphere_placement_matrix = translate(c1) @ scale(carbon_sphere_scale)
             inverse_sphere_placement_matrix = np.linalg.inv(sphere_placement_matrix)
 
             sphere_impostor_triangle_vertices = apply_transform_to_vertices(
@@ -70,7 +97,7 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
             vbo_data = np.empty(dtype=vbo_dtype, shape=len(sphere_impostor_triangle_vertices))
 
             vbo_data["a_vertex"] = sphere_impostor_triangle_vertices
-            vbo_data["a_lattice_position"] = (ix, iy, iz)
+            vbo_data["a_lattice_position"] = c1
             vbo_data["a_lattice_delta"] = (0, 0, 0)
             vbo_data["inverse_placement_matrix_row1"] = inverse_sphere_placement_matrix[0]
             vbo_data["inverse_placement_matrix_row2"] = inverse_sphere_placement_matrix[1]
@@ -94,8 +121,11 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
 
                     # Add triangles for a single Carbon-Carbon bond cylinder.
 
-                    c1 = np.array((ix, iy, iz))
-                    c2 = np.array((jx, jy, jz))
+                    count_carbon_carbon_bonds += 1
+
+                    # Location of the second carbon.
+
+                    c2 = np.array((jx - 3.5, jy - 3.5, jz - 3.5))
 
                     # The bond cylinder doesn't have to go from the center of one carbon sphere to the center of
                     # the next carbon sphere; instead, it can go from the intersection of the bond cylinder with
@@ -109,10 +139,10 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
 
                     subtract = 0.98 * np.sqrt(carbon_sphere_scale ** 2 - carbon_carbon_bond_scale ** 2)
 
-                    p1 = c2 + normalize(c1 - c2) * (np.linalg.norm(c1 - c2) - subtract)
-                    p2 = c1 + normalize(c2 - c1) * (np.linalg.norm(c2 - c1) - subtract)
+                    cyl1 = c2 + normalize(c1 - c2) * (np.linalg.norm(c1 - c2) - subtract)
+                    cyl2 = c1 + normalize(c2 - c1) * (np.linalg.norm(c2 - c1) - subtract)
 
-                    cylinder_placement_matrix = make_cylinder_placement_transform(p1, p2, carbon_carbon_bond_scale)
+                    cylinder_placement_matrix = make_cylinder_placement_transform(cyl1, cyl2, carbon_carbon_bond_scale)
                     inverse_cylinder_placement_matrix = np.linalg.inv(cylinder_placement_matrix)
 
                     cylinder_impostor_triangle_vertices = apply_transform_to_vertices(
@@ -120,7 +150,7 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
 
                     vbo_data = np.empty(dtype=vbo_dtype, shape=len(cylinder_impostor_triangle_vertices))
                     vbo_data["a_vertex"] = cylinder_impostor_triangle_vertices
-                    vbo_data["a_lattice_position"] = (ix, iy, iz)
+                    vbo_data["a_lattice_position"] = c1
                     vbo_data["a_lattice_delta"] = (dx, dy, dz)
                     vbo_data["inverse_placement_matrix_row1"] = inverse_cylinder_placement_matrix[0]
                     vbo_data["inverse_placement_matrix_row2"] = inverse_cylinder_placement_matrix[1]
@@ -129,6 +159,10 @@ def make_diamond_lattice_unitcell_triangle_vertex_data(transformation_matrix=Non
                     vbo_data_list.append(vbo_data)
 
     vbo_data = np.concatenate(vbo_data_list)
+
+    print("Diamond lattice unit cell contains {} carbon atoms and {} carbon-carbon bonds.".format(
+        count_carbons, count_carbon_carbon_bonds
+    ))
 
     return vbo_data
 
@@ -145,8 +179,6 @@ class RenderableDiamondLattice(Renderable):
 
         self.color_mode = 0
         self.cut_mode = 0
-        self.unit_cells_per_dimension = 5
-        self.crystal_side_length = 16.0
 
         # Compile the shader program.
 
@@ -162,7 +194,7 @@ class RenderableDiamondLattice(Renderable):
         self._transposed_inverse_view_model_matrix_location = gl_get_uniform_location_checked(self._shader_program, "transposed_inverse_view_model_matrix")
 
         self._unit_cells_per_dimension_location = glGetUniformLocation(self._shader_program, "unit_cells_per_dimension")
-        self._crystal_side_length_location = glGetUniformLocation(self._shader_program, "crystal_side_length")
+        self._diamond_lattice_side_length_location = glGetUniformLocation(self._shader_program, "diamond_lattice_side_length")
         self._cut_mode_location = glGetUniformLocation(self._shader_program, "cut_mode")
         self._color_mode_location = glGetUniformLocation(self._shader_program, "color_mode")
         self._impostor_mode_location = glGetUniformLocation(self._shader_program, "impostor_mode")
@@ -229,13 +261,17 @@ class RenderableDiamondLattice(Renderable):
 
         glUniformMatrix4fv(self._transposed_inverse_view_model_matrix_location, 1, GL_TRUE, np.linalg.inv(view_matrix @ model_matrix).T.astype(np.float32))
 
-        glUniform1ui(self._unit_cells_per_dimension_location, self.unit_cells_per_dimension)
+        diamond_lattice_side_length = world.get_variable("diamond_lattice_side_length")
+        unit_cells_per_dimension = 2 * ((diamond_lattice_side_length + 4) // 8) + 1
+
+        glUniform1ui(self._unit_cells_per_dimension_location, unit_cells_per_dimension)
+        glUniform1f(self._diamond_lattice_side_length_location,  diamond_lattice_side_length)
+
         glUniform1ui(self._color_mode_location, self.color_mode)
-        glUniform1f(self._crystal_side_length_location, self.crystal_side_length)
         glUniform1ui(self._cut_mode_location, self.cut_mode)
 
         glUniform1ui(self._impostor_mode_location, world.get_variable("impostor_mode"))
 
         glEnable(GL_CULL_FACE)
         glBindVertexArray(self._vao)
-        glDrawArraysInstanced(GL_TRIANGLES, 0, self._vertex_count, self.unit_cells_per_dimension ** 3)
+        glDrawArraysInstanced(GL_TRIANGLES, 0, self._vertex_count, unit_cells_per_dimension ** 3)
