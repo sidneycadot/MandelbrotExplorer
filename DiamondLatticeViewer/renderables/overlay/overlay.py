@@ -58,13 +58,13 @@ class RenderableOverlay(Renderable):
 
         # Prepare texture.
 
-        truetype_font_source_path = os.path.join(os.path.dirname(__file__), "Monoid-Regular.ttf")
+        truetype_font_source_path = os.path.join(os.path.dirname(__file__), "fonts/AtariClassic_ExtraSmooth.ttf")
         truetype_font_size = 12
 
         self._last_text = None
         self._font = ImageFont.truetype(truetype_font_source_path, truetype_font_size)
         self._texture_background = (40, 70, 200, 64)
-        self._texture_image = Image.new("RGBA", (360, 80), self._texture_background)
+        self._texture_image = Image.new("RGBA", (512, 64), self._texture_background)
         self._texture_draw = ImageDraw.Draw(self._texture_image)
 
         self._texture = glGenTextures(1)
@@ -161,7 +161,7 @@ class RenderableOverlay(Renderable):
                 self._texture_background,
                 (0, 0, self._texture_image.size[0], self._texture_image.size[1])
             )
-            self._texture_draw.multiline_text((10, 4), text, font=self._font, fill='yellow')
+            self._texture_draw.multiline_text((0, 0), text, font=self._font, fill='yellow')
             glTexSubImage2D(
                 GL_TEXTURE_2D, 0,
                 0, 0,
