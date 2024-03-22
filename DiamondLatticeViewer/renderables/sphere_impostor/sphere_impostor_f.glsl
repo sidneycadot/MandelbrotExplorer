@@ -85,6 +85,7 @@ void main()
         }
         else
         {
+            gl_FragDepth = gl_FragCoord.z;
             fragment_color = vec4(1, 1, 0, 1);
             return;
         }
